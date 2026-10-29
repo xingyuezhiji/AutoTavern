@@ -452,6 +452,8 @@ def train_bc(args) -> None:
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
     best_val = float("inf")
+    best_epoch = 0
+    no_improve = 0
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     best_path = output_dir / "tavern_bc_policy.pt"
@@ -505,8 +507,17 @@ def train_bc(args) -> None:
         )
         if val_loss < best_val:
             best_val = val_loss
+            best_epoch = epoch
+            no_improve = 0
             save_checkpoint(torch, model, cfg, best_path, args, val_loss, val_acc, taverngym)
             print(f"saved {best_path}", flush=True)
+        else:
+            no_improve += 1
+            print(f"no val_loss improvement ({no_improve}/{args.patience})", flush=True)
+            if args.patience > 0 and no_improve >= args.patience:
+                print(f"early stopping at epoch={epoch}; best was epoch={best_epoch}",
+                      flush=True)
+                break
 
     model.load_state_dict(torch.load(best_path, map_location="cpu")["state_dict"])
     if args.rl_rounds:
@@ -607,9 +618,11 @@ def parse_args():
     parser.add_argument("--action-identity", action="store_true",
                         help="enable zero-initialized action-aligned card identity head")
     parser.add_argument("--batch-size", type=int, default=512)
-    parser.add_argument("--lr", type=float, default=3e-4)
-    parser.add_argument("--weight-decay", type=float, default=1e-4)
+    parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--weight-decay", type=float, default=1e-3)
     parser.add_argument("--grad-clip", type=float, default=1.0)
+    parser.add_argument("--patience", type=int, default=4,
+                        help="early stopping patience; 0 disables")
     parser.add_argument("--val-ratio", type=float, default=0.1)
     parser.add_argument("--eval-games", type=int, default=16)
     parser.add_argument("--final-eval-games", type=int, default=256)
