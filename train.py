@@ -101,7 +101,8 @@ def install_environment() -> None:
         architecture = {"x86_64": "x86_64", "aarch64": "aarch64"}.get(platform.machine())
         if platform.system() != "Linux" or architecture is None:
             raise RuntimeError("automatic Rust installation requires Linux x86_64/aarch64")
-        installer = Path("/tmp/autotavern-rustup-init")
+        # rustup selects installer/proxy mode from its executable filename.
+        installer = Path("/tmp/rustup-init")
         url = f"https://rsproxy.cn/rustup/dist/{architecture}-unknown-linux-gnu/rustup-init"
         for attempt in range(1, 4):
             try:
