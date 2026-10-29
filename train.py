@@ -213,7 +213,12 @@ def decode_obs(np, obs_bytes: tuple[bytes, bytes], mask_bytes: bytes):
     return features, cards, limit_action_mask(features, mask)
 
 
-def generate_bot_dataset(np, taverngym, *, samples: int, seed: int, max_games: int):
+def generate_bot_dataset(np, taverngym, *, samples: int, seed: int, max_games: int,
+                         teacher: str = "bot"):
+    if teacher == "guide":
+        from guide_teacher import generate_dataset
+        return generate_dataset(np, taverngym, samples=samples, seed=seed,
+                                max_games=max_games)
     features, cards, masks, actions = [], [], [], []
     game_ids = []
     game_count = 0
@@ -373,8 +378,16 @@ def train_bc(args) -> None:
     if taverngym.OBS2_FLOATS != FEATURE_DIM or taverngym.OBS2_CARDS != CARD_DIM:
         raise RuntimeError(f"unexpected observe2 dims: {taverngym.OBS2_FLOATS}, {taverngym.OBS2_CARDS}")
 
+    resume_payload = None
+    if args.resume:
+        from checkpoint_resume import load_resume
+        resume_payload = load_resume(
+            torch, args.resume, ruleset=ARENA_RULESET_ID,
+            catalog=ARENA_CATALOG_SHA256, build=taverngym.build_info(),
+            expected_sha256=args.resume_sha256)
     x_feat, x_card, x_mask, y, game_ids = generate_bot_dataset(
-        np, taverngym, samples=args.samples, seed=args.seed, max_games=args.max_games
+        np, taverngym, samples=args.samples, seed=args.seed, max_games=args.max_games,
+        teacher=args.teacher
     )
     print(f"dataset ready: samples={len(y)}", flush=True)
     unique_games = np.unique(game_ids)
@@ -388,16 +401,28 @@ def train_bc(args) -> None:
     print(f"split train={len(train_idx)} val={len(val_idx)} "
           f"games={len(unique_games)} val_games={val_games.tolist()}", flush=True)
 
-    cfg = ModelConfig(card_vocab=max(int(x_card.max()) + 1, args.card_vocab))
+    cfg = (ModelConfig(**resume_payload["model_config"]) if resume_payload else
+           ModelConfig(card_vocab=max(int(x_card.max()) + 1, args.card_vocab)))
+    if int(x_card.max()) >= cfg.card_vocab:
+        raise ValueError("sample card vocabulary exceeds resumed model vocabulary")
     TavernBCPolicy = build_model_class(nn, torch)
     print(f"moving policy to {device}", flush=True)
-    model = move_policy(torch, TavernBCPolicy(cfg), device)
+    model = TavernBCPolicy(cfg)
+    if resume_payload:
+        model.load_state_dict(resume_payload["state_dict"], strict=True)
+    model = move_policy(torch, model, device)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
     best_val = float("inf")
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     best_path = output_dir / "tavern_bc_policy.pt"
+    if resume_payload:
+        metrics = resume_payload["metrics"]
+        save_checkpoint(torch, model, cfg, best_path, args,
+                        metrics["val_loss"], metrics["val_acc"], taverngym)
+        shutil.copy2(args.resume, output_dir / "tavern_initial.pt")
+        print("Warm start loaded; initial policy preserved before updates", flush=True)
 
     def batch_loss(indexes, train: bool):
         feat = move_tensor(torch, torch.from_numpy(x_feat[indexes]), device)
@@ -449,7 +474,18 @@ def train_bc(args) -> None:
         from tavern_ppo import train_ppo
         train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device,
                   (x_feat, x_card, x_mask, y, train_idx))
-    evaluate_policy(np, torch, taverngym, model, device, args.eval_games, args.seed + 100000)
+    final_report = evaluate_policy(np, torch, taverngym, model, device,
+                                   args.final_eval_games, args.final_eval_seed)
+    reports = {"selected": final_report}
+    if resume_payload:
+        initial = TavernBCPolicy(cfg)
+        initial.load_state_dict(resume_payload["state_dict"], strict=True)
+        # CPU inference is allowed; all parameter updates above stay on GPU.
+        reports["initial"] = evaluate_policy(
+            np, torch, taverngym, initial, "cpu",
+            args.final_eval_games, args.final_eval_seed)
+    (output_dir / "independent_evaluation.json").write_text(
+        json.dumps(reports, indent=2), encoding="utf-8")
     print(f"final checkpoint: {best_path}", flush=True)
 
 
@@ -481,31 +517,38 @@ def choose_model_action(np, torch, game, seat: int, model, device) -> int:
     return action
 
 
-def evaluate_policy(np, torch, taverngym, model, device, games: int, seed: int) -> None:
+def evaluate_policy(np, torch, taverngym, model, device, games: int, seed: int):
     placements = []
     model.eval()
     for i in range(games):
         game = taverngym.Game(seed + i)
+        learner = i % game.num_players
         guard = 0
         while not game.is_over():
             progressed = False
             for seat in range(game.num_players):
                 if not game.needs_action(seat):
                     continue
-                action = choose_model_action(np, torch, game, seat, model, device) if seat == 0 else int(game.bot_action(seat))
+                action = choose_model_action(np, torch, game, seat, model, device) if seat == learner else int(game.bot_action(seat))
                 game.step(seat, action)
                 progressed = True
             guard += 1
             if not progressed or guard > 50000:
                 raise RuntimeError("evaluation game did not progress")
-        placements.append(int(game.placements()[0]))
+        placements.append(int(game.placements()[learner]))
+        if (i + 1) % 32 == 0:
+            print(f"independent eval progress={i+1}/{games}", flush=True)
     arr = np.asarray(placements)
+    report = {"games": games, "seed": seed, "rotated_seats": True,
+              "avg_place": float(arr.mean()), "top4": float((arr <= 4).mean()),
+              "first": float((arr == 1).mean()), "placements": placements}
     print(
         "eval "
         f"games={games} avg_place={arr.mean():.3f} top4={(arr <= 4).mean():.3f} "
         f"first={(arr == 1).mean():.3f} placements={placements}",
         flush=True,
     )
+    return report
 
 
 def parse_args():
@@ -514,14 +557,19 @@ def parse_args():
     parser.add_argument("--train", action="store_true", help="run behavior-cloning training")
     parser.add_argument("--cpu", action="store_true", help="force CPU even if CUDA is available")
     parser.add_argument("--samples", type=int, default=50000)
+    parser.add_argument("--teacher", choices=("bot", "guide"), default="bot")
     parser.add_argument("--max-games", type=int, default=5000)
     parser.add_argument("--epochs", type=int, default=8)
+    parser.add_argument("--resume", help="checkpoint path, or auto for attached C2Net model")
+    parser.add_argument("--resume-sha256", help="required starting artifact SHA256")
     parser.add_argument("--batch-size", type=int, default=512)
     parser.add_argument("--lr", type=float, default=3e-4)
     parser.add_argument("--weight-decay", type=float, default=1e-4)
     parser.add_argument("--grad-clip", type=float, default=1.0)
     parser.add_argument("--val-ratio", type=float, default=0.1)
     parser.add_argument("--eval-games", type=int, default=16)
+    parser.add_argument("--final-eval-games", type=int, default=256)
+    parser.add_argument("--final-eval-seed", type=int, default=20401029)
     parser.add_argument("--seed", type=int, default=20261029)
     parser.add_argument("--card-vocab", type=int, default=4096)
     parser.add_argument("--rl-rounds", type=int, default=0)
@@ -530,11 +578,19 @@ def parse_args():
     parser.add_argument("--rl-lr", type=float, default=3e-5)
     parser.add_argument("--entropy-coef", type=float, default=0.01)
     parser.add_argument("--bc-anchor", type=float, default=0.1)
+    parser.add_argument("--top4-bonus", type=float, default=0.0)
+    parser.add_argument("--selection-interval", type=int, default=5)
+    parser.add_argument("--target-top4", type=float, default=0.7)
+    parser.add_argument("--target-avg-place", type=float, default=3.5)
     parser.add_argument("--output-dir", default=None)
     args = parser.parse_args()
-    if (args.samples < 1 or args.epochs < 1 or args.batch_size < 1 or
-            args.eval_games < 1 or args.rl_rounds < 0 or args.rl_games < 2 or
-            args.ppo_epochs < 1 or not 0 < args.val_ratio < 1):
+    if (args.samples < 1 or args.epochs < 0 or
+            (args.epochs == 0 and not args.resume) or args.batch_size < 1 or
+            args.eval_games < 1 or args.final_eval_games < 1 or
+            args.rl_rounds < 0 or args.rl_games < 2 or
+            args.ppo_epochs < 1 or args.selection_interval < 1 or
+            args.top4_bonus < 0 or not 0 <= args.target_top4 <= 1 or
+            not 1 <= args.target_avg_place <= 8 or not 0 < args.val_ratio < 1):
         parser.error("invalid sample, epoch, batch, evaluation, RL or validation limits")
     return args
 
@@ -550,6 +606,14 @@ def main() -> None:
         from c2net.context import prepare, upload_output
 
         ctx = prepare()
+        if args.resume == "auto":
+            model_root = getattr(ctx, "pretrain_model_path", None)
+            if not model_root:
+                raise ValueError("resume=auto requires an attached C2Net pretrained model")
+            matches = list(Path(model_root).rglob("tavern_bc_policy.pt"))
+            if len(matches) != 1:
+                raise ValueError("attached model must contain exactly one tavern_bc_policy.pt")
+            args.resume = str(matches[0])
         output_root = Path(ctx.output_path).resolve()
         destination = Path(args.output_dir).resolve() if args.output_dir else output_root
         if not destination.is_relative_to(output_root):

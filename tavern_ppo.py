@@ -7,10 +7,18 @@ import time
 from train import build_model_class, decode_obs, move_policy, move_tensor, save_checkpoint
 
 
-def placement_reward(place):
+def placement_reward(place, top4_bonus=0.0):
     if not 1 <= place <= 8:
         raise ValueError(f"invalid placement {place}")
-    return (4.5 - place) / 3.5 + 0.5 * (place == 1)
+    return (4.5 - place) / 3.5 + 0.5 * (place == 1) + top4_bonus * (place <= 4)
+
+
+def selection_stats(np, places, args):
+    mean = float(np.mean(places))
+    top4 = float(np.mean(np.asarray(places) <= 4))
+    # Both requested targets must hold; otherwise favor progress in top4.
+    key = (top4 >= args.target_top4 and mean <= args.target_avg_place, top4, -mean)
+    return key, mean, top4
 
 
 def collect(np, torch, taverngym, actor, critic, games, seed, *, stochastic):
@@ -86,12 +94,30 @@ def train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device, bc):
                             args.eval_games, selection_seed, stochastic=False)
         return places
     baseline = assess()
-    best_mean = float(np.mean(baseline))
-    metadata = {"reward": "(4.5-placement)/3.5 + 0.5*(placement==1)",
+    best_key, best_mean, best_top4 = selection_stats(np, baseline, args)
+    metadata = {"reward": "(4.5-placement)/3.5 + 0.5*(placement==1) + top4_bonus*(placement<=4)",
+                "top4_bonus": args.top4_bonus,
+                "initialization": "resumed_policy" if args.resume else "behavior_cloning",
                 "bc_placements": baseline, "selection_seed": selection_seed,
+                "selection_games": args.eval_games,
+                "target_top4": args.target_top4, "target_avg_place": args.target_avg_place,
                 "best_round": 0, "rounds": history}
     bc_payload = torch.load(output / "tavern_bc_policy.pt", map_location="cpu")
     torch.save(bc_payload, output / "tavern_bc_only.pt")
+    # The warm-start policy is also eligible on the development set, so
+    # supervised imitation cannot silently replace a stronger original.
+    initial_path = output / "tavern_initial.pt"
+    if initial_path.exists():
+        initial_payload = torch.load(initial_path, map_location="cpu", weights_only=True)
+        actor.load_state_dict(initial_payload["state_dict"], strict=True)
+        _, initial_places = collect(np, torch, taverngym, actor, cpu_critic,
+                                    args.eval_games, selection_seed, stochastic=False)
+        metadata["initial_placements"] = initial_places
+        key, mean, top4 = selection_stats(np, initial_places, args)
+        if key > best_key:
+            best_key, best_mean, best_top4 = key, mean, top4
+            metadata["best_round"] = "initial"
+            torch.save(initial_payload, output / "tavern_bc_policy.pt")
     print(f"PPO baseline placements={baseline} avg={best_mean:.3f}", flush=True)
     started = time.time()
     xf, xc, xm, y, train_idx = bc
@@ -103,7 +129,7 @@ def train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device, bc):
         flat, returns = [], []
         for episode, place in zip(rows, places):
             flat.extend(episode)
-            returns.extend([placement_reward(place)] * len(episode))
+            returns.extend([placement_reward(place, args.top4_bonus)] * len(episode))
         if not flat:
             raise RuntimeError("no PPO decisions")
         feat = np.stack([r[0] for r in flat])
@@ -158,7 +184,7 @@ def train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device, bc):
                 break
         record = {"round": iteration, "games": len(places), "decisions": len(flat),
                   "placements": places, "avg_place": float(np.mean(places)),
-                  "mean_reward": float(np.mean([placement_reward(p) for p in places])),
+                  "mean_reward": float(np.mean([placement_reward(p, args.top4_bonus) for p in places])),
                   "top4": float(np.mean(np.asarray(places) <= 4)),
                   "first": float(np.mean(np.asarray(places) == 1)),
                   "loss": float(np.mean(losses)) if losses else None,
@@ -166,18 +192,23 @@ def train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device, bc):
                   "actions": dict(Counter(map(int, actions))), "kl_stopped": stopped}
         # A fixed development set selects the checkpoint; external fixed games
         # remain untouched for the final independent comparison.
-        if iteration % 5 == 0 or iteration == args.rl_rounds:
+        if iteration % args.selection_interval == 0 or iteration == args.rl_rounds:
             selected = assess()
             record["selection_placements"] = selected
-            mean = float(np.mean(selected))
-            if mean < best_mean:
+            key, mean, top4 = selection_stats(np, selected, args)
+            record["selection_avg_place"] = mean
+            record["selection_top4"] = top4
+            if key > best_key:
+                best_key = key
                 best_mean = mean
+                best_top4 = top4
                 metadata["best_round"] = iteration
                 save_checkpoint(torch, model, cfg, output / "tavern_bc_policy.pt", args,
                                 bc_payload["metrics"]["val_loss"], bc_payload["metrics"]["val_acc"],
                                 taverngym)
         history.append(record)
         metadata["best_avg_place"] = best_mean
+        metadata["best_top4"] = best_top4
         (output / "ppo_metrics.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
         print(f"PPO round={iteration}/{args.rl_rounds} decisions={len(flat)} "
               f"avg_place={record['avg_place']:.3f} reward={record['mean_reward']:.3f} "
