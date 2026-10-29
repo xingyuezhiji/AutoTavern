@@ -270,19 +270,22 @@ def cuda_training_ready(timeout: float = 45) -> bool:
     probe = """
 import faulthandler
 import torch
-from train import ModelConfig, build_model_class
+from train import ModelConfig, build_model_class, move_policy, move_tensor
 faulthandler.enable()
 faulthandler.dump_traceback_later(20, repeat=True)
 torch.set_num_threads(4)
 print("CUDA probe: copying policy", flush=True)
 cfg = ModelConfig()
-model = build_model_class(torch.nn, torch)(cfg).to("cuda")
+model = move_policy(torch, build_model_class(torch.nn, torch)(cfg), "cuda")
 print("CUDA probe: forward/backward/optimizer", flush=True)
 opt = torch.optim.AdamW(model.parameters())
-features = torch.zeros(2, cfg.feature_dim, device="cuda")
-cards = torch.zeros(2, cfg.card_dim, dtype=torch.long, device="cuda")
-loss = model(features, cards).square().mean()
+features = move_tensor(torch, torch.zeros(2, cfg.feature_dim), "cuda")
+cards = move_tensor(torch, torch.zeros(2, cfg.card_dim, dtype=torch.long), "cuda")
+mask = move_tensor(torch, torch.ones(2, cfg.action_dim, dtype=torch.bool), "cuda")
+target = move_tensor(torch, torch.zeros(2, dtype=torch.long), "cuda")
+loss = torch.nn.functional.cross_entropy(model(features, cards).masked_fill(~mask, -1e9), target)
 loss.backward()
+torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
 opt.step()
 torch.cuda.synchronize()
 assert torch.isfinite(loss).item()
@@ -301,6 +304,35 @@ print("CUDA probe passed", flush=True)
         print(f"CUDA training probe failed (exit={result.returncode}); using CPU for this run", flush=True)
         return False
     return True
+
+
+def move_tensor(torch, tensor, device, *, chunk_bytes: int = 8 * 1024 * 1024):
+    """Use the staged dense transfer verified by OpenI task 898380 on CoreX."""
+    target = torch.device(device)
+    corex = "corex" in str(Path(torch.__file__).resolve()).lower()
+    if not (corex and tensor.device.type == "cpu" and target.type == "cuda"):
+        return tensor.to(target)
+    if tensor.layout != torch.strided or tensor.is_quantized:
+        raise TypeError("CoreX staged transfer requires dense, non-quantized tensors")
+    if chunk_bytes <= 0:
+        raise ValueError("chunk_bytes must be positive")
+    source = tensor.reshape(-1)
+    destination = torch.empty(source.numel(), dtype=tensor.dtype, device=target)
+    elements = max(1, chunk_bytes // tensor.element_size())
+    for offset in range(0, source.numel(), elements):
+        length = min(elements, source.numel() - offset)
+        # Clone even contiguous inputs to avoid CPU storage-backed Tensor.to.
+        staging = source.narrow(0, offset, length).clone()
+        destination.narrow(0, offset, length).copy_(staging, non_blocking=False)
+    return destination.view(tensor.shape)
+
+
+def move_policy(torch, model, device):
+    corex = "corex" in str(Path(torch.__file__).resolve()).lower()
+    staged = corex and torch.device(device).type == "cuda"
+    print(f"model transfer={'staged_copy' if staged else 'native'} device={device}", flush=True)
+    # _apply preserves Parameters, gradients, buffers and child modules.
+    return model._apply(lambda tensor: move_tensor(torch, tensor, device))
 
 
 def train_bc(args) -> None:
@@ -330,7 +362,7 @@ def train_bc(args) -> None:
     cfg = ModelConfig(card_vocab=max(int(x_card.max()) + 1, args.card_vocab))
     TavernBCPolicy = build_model_class(nn, torch)
     print(f"moving policy to {device}", flush=True)
-    model = TavernBCPolicy(cfg).to(device)
+    model = move_policy(torch, TavernBCPolicy(cfg), device)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
     best_val = float("inf")
@@ -339,10 +371,10 @@ def train_bc(args) -> None:
     best_path = output_dir / "tavern_bc_policy.pt"
 
     def batch_loss(indexes, train: bool):
-        feat = torch.from_numpy(x_feat[indexes]).to(device)
-        card = torch.from_numpy(x_card[indexes]).to(device)
-        mask = torch.from_numpy(x_mask[indexes]).to(device)
-        target = torch.from_numpy(y[indexes]).to(device)
+        feat = move_tensor(torch, torch.from_numpy(x_feat[indexes]), device)
+        card = move_tensor(torch, torch.from_numpy(x_card[indexes]), device)
+        mask = move_tensor(torch, torch.from_numpy(x_mask[indexes]), device)
+        target = move_tensor(torch, torch.from_numpy(y[indexes]), device)
         logits = model(feat, card).masked_fill(~mask, -1e9)
         loss = F.cross_entropy(logits, target)
         pred = logits.argmax(dim=-1)
@@ -405,8 +437,8 @@ def choose_model_action(np, torch, game, seat: int, model, device) -> int:
     f, c, m = decode_obs(np, game.observe2(seat), game.legal_mask(seat))
     with torch.no_grad():
         logits = model(
-            torch.from_numpy(f).unsqueeze(0).to(device),
-            torch.from_numpy(c.astype("int64")).unsqueeze(0).to(device),
+            move_tensor(torch, torch.from_numpy(f).unsqueeze(0), device),
+            move_tensor(torch, torch.from_numpy(c.astype("int64")).unsqueeze(0), device),
         )[0].detach().cpu().numpy()
     logits = np.where(m, logits, -np.inf)
     action = int(np.argmax(logits))
