@@ -277,6 +277,11 @@ from train import ModelConfig, build_model_class, move_policy, move_tensor
 faulthandler.enable()
 faulthandler.dump_traceback_later(20, repeat=True)
 torch.set_num_threads(4)
+print("CUDA probe: checking device", flush=True)
+if not torch.cuda.is_available():
+    raise RuntimeError("CUDA is unavailable")
+torch.cuda.set_device(0)
+print(f"CUDA probe: gpu={torch.cuda.get_device_name(0)}", flush=True)
 print("CUDA probe: initializing allocator", flush=True)
 torch.empty(1, device="cuda")
 torch.cuda.synchronize()
@@ -343,13 +348,16 @@ def move_policy(torch, model, device):
 
 
 def train_bc(args) -> None:
+    # Keep the parent CUDA context untouched until the child has exited.
+    # Vendor runtimes may block allocation in another process after detection
+    # initializes a context in the parent.
+    use_cuda = not args.cpu and cuda_training_ready()
     np, torch, nn, F, taverngym = import_runtime()
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     torch.set_num_threads(min(4, os.cpu_count() or 1))
 
-    use_cuda = not args.cpu and torch.cuda.is_available() and cuda_training_ready()
     device = torch.device("cuda" if use_cuda else "cpu")
     print(f"device={device}", flush=True)
     if device.type == "cuda":
