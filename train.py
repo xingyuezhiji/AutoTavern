@@ -640,11 +640,22 @@ def parse_args():
 
 
 def _resolve_rollout_data(ctx, value: str) -> str:
-    """`--rollout-data auto` 时在挂载的数据集目录里找唯一的 rollouts_*.npz。"""
+    """解析 --rollout-data。
+
+    - `auto`：扫描 C2Net ctx 所有字符串属性 + 固定路径，rglob 唯一 rollouts_*.npz。
+    - 硬编码路径：若路径存在直接用；若不存在**自动降级为 auto** 并警告。
+    """
     if value != "auto":
-        return value
+        p = Path(value)
+        if p.is_file():
+            print(f"rollout data (explicit): {p}", flush=True)
+            return str(p)
+        print(f"WARNING: explicit rollout-data={value!r} not found, falling back to auto",
+              flush=True)
+
     roots = []
     # C2Net 的挂载路径属性名随镜像版本变化，凡是指向已存在目录的字符串属性都试一遍。
+    ctx_str_attrs = {}
     for attr in dir(ctx):
         if attr.startswith("_"):
             continue
@@ -652,11 +663,24 @@ def _resolve_rollout_data(ctx, value: str) -> str:
             path = getattr(ctx, attr)
         except Exception:
             continue
-        if isinstance(path, str) and os.path.isdir(path):
-            roots.append(Path(path))
-    for fixed in ("/dataset", "/datasets", "/data", "/mnt/dataset"):
+        if isinstance(path, str):
+            ctx_str_attrs[attr] = path
+            if os.path.isdir(path):
+                roots.append(Path(path))
+    for fixed in ("/dataset", "/datasets", "/data", "/mnt/dataset", "/mnt", "/workspace", "/tmp"):
         if os.path.isdir(fixed):
             roots.append(Path(fixed))
+
+    # DEBUG：把 ctx 的所有字符串属性和每个目录的一级内容打印出来
+    print(f"[rollout-debug] ctx string attributes: {ctx_str_attrs}", flush=True)
+    for root in dict.fromkeys(roots):
+        try:
+            entries = sorted(root.iterdir())[:20]
+            print(f"[rollout-debug] scan root={root} entries={[e.name for e in entries]}",
+                  flush=True)
+        except Exception as e:
+            print(f"[rollout-debug] scan root={root} error={e}", flush=True)
+
     seen = []
     for root in dict.fromkeys(roots):
         matches = sorted(root.rglob("rollouts_*.npz"))
@@ -666,7 +690,10 @@ def _resolve_rollout_data(ctx, value: str) -> str:
         if len(matches) > 1:
             raise ValueError(f"attached dataset has multiple rollouts_*.npz: {matches}")
         seen.append(str(root))
-    raise ValueError(f"rollout-data=auto found no rollouts_*.npz under: {seen}")
+    raise ValueError(
+        f"rollout-data=auto found no rollouts_*.npz under: {seen}\n"
+        f"ctx string attrs: {ctx_str_attrs}"
+    )
 
 
 def main() -> None:
