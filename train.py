@@ -34,6 +34,8 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Iterable
 
+from action_limits import limit_action_mask
+
 
 REPO_ROOT = Path(__file__).resolve().parent
 # Match the allocator configuration used by the successful CoreX reference.
@@ -208,7 +210,7 @@ def decode_obs(np, obs_bytes: tuple[bytes, bytes], mask_bytes: bytes):
     mask = np.frombuffer(mask_bytes, dtype=np.uint8).astype(bool)
     if features.shape != (FEATURE_DIM,) or cards.shape != (CARD_DIM,) or mask.shape != (ACTION_DIM,):
         raise ValueError(f"bad obs shapes: {features.shape}, {cards.shape}, {mask.shape}")
-    return features, cards, mask
+    return features, cards, limit_action_mask(features, mask)
 
 
 def generate_bot_dataset(np, taverngym, *, samples: int, seed: int, max_games: int):

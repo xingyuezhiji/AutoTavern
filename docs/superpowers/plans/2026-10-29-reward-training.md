@@ -56,3 +56,21 @@ and all hyperparameters. Startup file `train_gpu_fresh.py` installs dependencies
 in a separate process, then execs a fresh `train.py --train` interpreter. This
 tests whether the install-stage Torch import/context affects the later probe.
 It is a training task, not an interactive/debug task, and rejects `--cpu`.
+
+917209 verified fresh training interpreter after installation but still hung
+at the same first CUDA allocation; STOPPED confirmed in task list at 16:15.
+The install-process Torch context hypothesis is not supported by this run.
+
+917216 submitted 16:17:32 from the same training template with commit 5af1eba.
+Startup train_gpu_fresh.py now reads driver status and tests uncached GPU
+allocation before setup, with a bounded 60s timeout and no CPU fallback.
+All 100000/16/512/32/40/32/4 hyperparameters remain unchanged.
+
+917216 GPU preflight succeeded on BI-V100 with uncached memory allocation.
+At 16:19 compilation is in progress; await full CUDA probe and actual training.
+
+At 16:21, task 917216 passed the full CUDA probe and completed BC epoch 1
+on GPU. All 100000 samples were collected, split by 94 whole games, with
+9788 validation decisions. Epoch 1 validation accuracy is 0.6774 and loss
+1.0126; epoch 2 has started. Await all BC/PPO rounds and independent
+downloaded-checkpoint evaluation before interpreting game strength.

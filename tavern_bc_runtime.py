@@ -16,6 +16,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from action_limits import limit_action_mask
+
 
 @dataclass
 class ModelConfig:
@@ -81,4 +83,6 @@ def predict(observation, context):
     cards = torch.from_numpy(np.asarray(observation["cards"], dtype=np.int64)).unsqueeze(0).to(_DEVICE)
     with torch.no_grad():
         logits = model(features, cards)[0].detach().cpu().numpy()
-    return logits
+    mask = limit_action_mask(observation["features"],
+                             np.asarray(observation["action_mask"], dtype=bool))
+    return np.where(mask, logits, -np.inf)
