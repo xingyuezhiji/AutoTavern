@@ -644,18 +644,29 @@ def _resolve_rollout_data(ctx, value: str) -> str:
     if value != "auto":
         return value
     roots = []
-    for attr in ("dataset_path", "input_path", "data_path", "dataset"):
-        path = getattr(ctx, attr, None)
-        if path:
+    # C2Net 的挂载路径属性名随镜像版本变化，凡是指向已存在目录的字符串属性都试一遍。
+    for attr in dir(ctx):
+        if attr.startswith("_"):
+            continue
+        try:
+            path = getattr(ctx, attr)
+        except Exception:
+            continue
+        if isinstance(path, str) and os.path.isdir(path):
             roots.append(Path(path))
-    for root in roots:
+    for fixed in ("/dataset", "/datasets", "/data", "/mnt/dataset"):
+        if os.path.isdir(fixed):
+            roots.append(Path(fixed))
+    seen = []
+    for root in dict.fromkeys(roots):
         matches = sorted(root.rglob("rollouts_*.npz"))
         if len(matches) == 1:
             print(f"rollout data resolved: {matches[0]}", flush=True)
             return str(matches[0])
         if len(matches) > 1:
             raise ValueError(f"attached dataset has multiple rollouts_*.npz: {matches}")
-    raise ValueError("rollout-data=auto requires an attached dataset with one rollouts_*.npz")
+        seen.append(str(root))
+    raise ValueError(f"rollout-data=auto found no rollouts_*.npz under: {seen}")
 
 
 def main() -> None:
