@@ -28,6 +28,7 @@ import time
 import urllib.error
 import urllib.request
 from dataclasses import asdict, dataclass
+from importlib.metadata import version
 from importlib.util import find_spec
 from pathlib import Path
 from typing import Iterable
@@ -126,8 +127,13 @@ def install_environment() -> None:
             '[source.rsproxy-sparse]\nregistry = "sparse+https://rsproxy.cn/index/"\n'
             '[net]\nretry = 3\n[http]\ntimeout = 120\n', encoding="utf-8")
     run(["rustc", "--version"])
-    # Torch 2.1 in the BI-V100 image requires the NumPy 1.x ABI.
-    run([sys.executable, "-m", "pip", "install", "maturin>=1.15,<2", "numpy>=1.24,<2"])
+    run([sys.executable, "-m", "pip", "install", "maturin>=1.15,<2"])
+    # Preserve the image's NumPy 1.x: its CoreX TensorFlow requires <1.24
+    # and CuPy requires <1.26. Torch 2.1 also needs the NumPy 1.x ABI.
+    if find_spec("numpy") is None or int(version("numpy").split(".")[0]) >= 2:
+        run([sys.executable, "-m", "pip", "install", "numpy>=1.23,<1.24"])
+    else:
+        print(f"keeping existing numpy={version('numpy')}", flush=True)
     # ILUVATAR / BI-V100 images often carry a platform-adapted torch build.
     # Do not overwrite it unless torch is genuinely absent.
     if find_spec("torch") is None:
@@ -205,6 +211,7 @@ def generate_bot_dataset(np, taverngym, *, samples: int, seed: int, max_games: i
     features, cards, masks, actions = [], [], [], []
     game_count = 0
     started = time.time()
+    print(f"generating bot dataset: samples={samples} seed={seed}", flush=True)
     while len(actions) < samples and game_count < max_games:
         game = taverngym.Game(seed + game_count)
         guard = 0
@@ -223,6 +230,9 @@ def generate_bot_dataset(np, taverngym, *, samples: int, seed: int, max_games: i
                 cards.append(c)
                 masks.append(m)
                 actions.append(action)
+                if len(actions) % 500 == 0:
+                    print(f"dataset samples={len(actions)}/{samples} game={game_count} "
+                          f"turn={game.turn} elapsed={time.time() - started:.1f}s", flush=True)
                 game.step(seat, action)
                 progressed = True
                 if len(actions) >= samples:
@@ -272,12 +282,14 @@ def train_bc(args) -> None:
     x_feat, x_card, x_mask, y = generate_bot_dataset(
         np, taverngym, samples=args.samples, seed=args.seed, max_games=args.max_games
     )
+    print(f"dataset ready: samples={len(y)}", flush=True)
     split = int(len(y) * (1.0 - args.val_ratio))
     train_idx = np.arange(split)
     val_idx = np.arange(split, len(y))
 
     cfg = ModelConfig(card_vocab=max(int(x_card.max()) + 1, args.card_vocab))
     TavernBCPolicy = build_model_class(nn, torch)
+    print(f"moving policy to {device}", flush=True)
     model = TavernBCPolicy(cfg).to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
@@ -303,6 +315,7 @@ def train_bc(args) -> None:
         return float(loss.detach().cpu()), float(acc.detach().cpu())
 
     for epoch in range(1, args.epochs + 1):
+        print(f"starting epoch={epoch}", flush=True)
         model.train()
         train_losses, train_accs = [], []
         for idx in iter_minibatches(np, len(train_idx), args.batch_size, shuffle=True):

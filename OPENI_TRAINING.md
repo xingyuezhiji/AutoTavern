@@ -31,7 +31,16 @@ Outputs:
 outputs/tavern_bc_policy.pt
 ```
 
-If OpenI sets `OUTPUT_PATH`, `train.py` writes the checkpoint there by default.
+On OpenI, `train.py` calls `c2net.context.prepare()` and writes the checkpoint to
+`c2net_context.output_path` (typically `/tmp/output`). After training and evaluation
+finish, it calls `upload_output()` to return the result to the task's **结果下载**
+tab. A custom `--output-dir` must stay inside that output directory.
+
+Outside OpenI, the default is `OUTPUT_PATH` when set, otherwise `outputs/`.
+
+The installer downloads Rust with Python (the BI-V100 image has no `curl`),
+uses the rsproxy mirror and Rust 1.98.1, then builds TavernGym with
+`--no-build-isolation` so maturin does not bootstrap another toolchain.
 
 ## Local Use After Training
 
