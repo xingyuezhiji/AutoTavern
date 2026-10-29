@@ -36,6 +36,9 @@ from typing import Iterable
 
 
 REPO_ROOT = Path(__file__).resolve().parent
+# Match the allocator configuration used by the successful CoreX reference.
+# This must be set before importing Torch in the parent or CUDA probe.
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "max_split_size_mb:128")
 PATCH_URL = "https://rizling.top/downloads/autotavern-observe2.patch"
 PATCH_SHA256 = "1e48a071cad63c284debbf917cb012595a405a4ef5ab66180eb2918e205aaac0"
 PINNED_COMMIT = "fb61201a557ddd36a411cf44aac51ce4d9b606ce"
@@ -265,7 +268,7 @@ def iter_minibatches(np, n: int, batch_size: int, *, shuffle: bool = True) -> It
         yield order[start : start + batch_size]
 
 
-def cuda_training_ready(timeout: float = 45) -> bool:
+def cuda_training_ready(timeout: float = 180) -> bool:
     """Exercise the actual policy in a killable process before touching GPU here."""
     probe = """
 import faulthandler
@@ -274,6 +277,10 @@ from train import ModelConfig, build_model_class, move_policy, move_tensor
 faulthandler.enable()
 faulthandler.dump_traceback_later(20, repeat=True)
 torch.set_num_threads(4)
+print("CUDA probe: initializing allocator", flush=True)
+torch.empty(1, device="cuda")
+torch.cuda.synchronize()
+print("CUDA probe: allocator ready", flush=True)
 print("CUDA probe: copying policy", flush=True)
 cfg = ModelConfig()
 model = move_policy(torch, build_model_class(torch.nn, torch)(cfg), "cuda")
