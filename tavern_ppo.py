@@ -121,6 +121,11 @@ def train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device, bc):
     print(f"PPO baseline placements={baseline} avg={best_mean:.3f}", flush=True)
     started = time.time()
     xf, xc, xm, y, train_idx = bc
+    # npz 里存 float16/int16/uint8，统一转成训练 dtype。
+    xf = xf.astype("float32")
+    xc = xc.astype("int64")
+    xm = xm.astype("bool")
+    y = y.astype("int64")
     for iteration in range(1, args.rl_rounds + 1):
         sync()
         rows, places = collect(np, torch, taverngym, actor, cpu_critic, args.rl_games,
