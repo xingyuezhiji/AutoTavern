@@ -1,0 +1,48 @@
+# OpenI CloudBrains Training
+
+This repository is pinned to AutoTavern commit `fb61201a557ddd36a411cf44aac51ce4d9b606ce`
+with the TavernArena public observe2 patch applied or applied by `train.py`.
+
+## CloudBrains Command
+
+Use the Python training entry:
+
+```bash
+cd AutoTavern
+python train.py --install --train --samples 50000 --epochs 8 --batch-size 512 --eval-games 16
+```
+
+For a quick smoke run:
+
+```bash
+cd AutoTavern
+python train.py --install --train --samples 2000 --epochs 1 --batch-size 256 --eval-games 2
+```
+
+The script uses CUDA automatically when PyTorch sees the BI-V100 / ILUVATAR GPGPU as a CUDA
+device. If the image's PyTorch build cannot see the card, the script falls back to CPU unless
+`--cpu` is passed explicitly.
+
+Outputs:
+
+```text
+outputs/tavern_bc_policy.pt
+```
+
+If OpenI sets `OUTPUT_PATH`, `train.py` writes the checkpoint there by default.
+
+## Local Use After Training
+
+Download `tavern_bc_policy.pt` from the CloudBrains output.
+
+From the local arena connector directory:
+
+```bash
+cd /Users/bytedance/project/codeai/tavernarena-openi
+cp /Users/bytedance/project/codeai/AutoTavern/tavern_bc_runtime.py .
+export TAVERN_BC_CHECKPOINT="/absolute/path/to/tavern_bc_policy.pt"
+export TAVERN_POLICY_RUNTIME="tavern_bc_runtime:predict"
+./run_local.sh practice-policy
+```
+
+Only after practice succeeds should we consider arena matching.

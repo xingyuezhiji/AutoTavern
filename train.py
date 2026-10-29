@@ -1,0 +1,371 @@
+#!/usr/bin/env python3
+"""Train a small TavernArena-compatible policy on OpenI CloudBrains.
+
+This script is designed for environments where the job can clone this repository
+but cannot clone GitHub directly. It can:
+
+1. verify/apply the public observe2 patch;
+2. install TavernGym and PyTorch dependencies;
+3. train a behavior-cloning policy from TavernGym's scripted bot;
+4. export a checkpoint that can be loaded locally by `tavern_policy.py`.
+
+No arena key, live match state, model registry credential, or game save is read
+or written by this script.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import random
+import subprocess
+import sys
+import time
+import urllib.request
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Iterable
+
+
+REPO_ROOT = Path(__file__).resolve().parent
+PATCH_URL = "https://rizling.top/downloads/autotavern-observe2.patch"
+PATCH_SHA256 = "1e48a071cad63c284debbf917cb012595a405a4ef5ab66180eb2918e205aaac0"
+PINNED_COMMIT = "fb61201a557ddd36a411cf44aac51ce4d9b606ce"
+ARENA_RULESET_ID = "tg36-bc45cfc55a0e5cd6c14c"
+ARENA_CATALOG_SHA256 = "c4c42e6ce5060e1b79fbcd5f4edbf6d17495f0f52690072481d690610f7ef6d7"
+FEATURE_DIM = 4017
+CARD_DIM = 447
+ACTION_DIM = 245
+
+
+def run(cmd: list[str], *, cwd: Path = REPO_ROOT, check: bool = True) -> subprocess.CompletedProcess:
+    print("+ " + " ".join(cmd), flush=True)
+    return subprocess.run(cmd, cwd=str(cwd), check=check)
+
+
+def sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def ensure_observe2_patch() -> None:
+    """Apply the arena public patch if this checkout is still the base release."""
+    patched_marker = REPO_ROOT / "crates" / "taverngym" / "src" / "obs2.rs"
+    if patched_marker.exists():
+        print("observe2 patch already present", flush=True)
+        return
+
+    current = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=str(REPO_ROOT),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    ).stdout.strip()
+    if current and current != PINNED_COMMIT:
+        print(f"warning: current git commit is {current}, expected base {PINNED_COMMIT}", flush=True)
+
+    patch_path = Path("/tmp/autotavern-observe2.patch")
+    print(f"downloading observe2 patch: {PATCH_URL}", flush=True)
+    urllib.request.urlretrieve(PATCH_URL, patch_path)
+    got = sha256_file(patch_path)
+    if got != PATCH_SHA256:
+        raise RuntimeError(f"patch sha256 mismatch: got {got}, expected {PATCH_SHA256}")
+
+    run(["git", "apply", str(patch_path)])
+    print("observe2 patch applied", flush=True)
+
+
+def install_environment() -> None:
+    """Install dependencies inside the OpenI job container."""
+    ensure_observe2_patch()
+    run([sys.executable, "-m", "pip", "install", "--upgrade", "pip", "maturin", "torch", "numpy"])
+    run([sys.executable, "-m", "pip", "install", "."])
+
+
+def import_runtime():
+    import numpy as np
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    import taverngym
+
+    return np, torch, nn, F, taverngym
+
+
+@dataclass
+class ModelConfig:
+    feature_dim: int = FEATURE_DIM
+    card_dim: int = CARD_DIM
+    action_dim: int = ACTION_DIM
+    card_vocab: int = 4096
+    card_emb: int = 32
+    hidden: int = 512
+    dropout: float = 0.05
+
+
+def build_model_class(nn, torch):
+    class TavernBCPolicy(nn.Module):
+        def __init__(self, cfg: ModelConfig):
+            super().__init__()
+            self.cfg = cfg
+            self.card_emb = nn.Embedding(cfg.card_vocab, cfg.card_emb, padding_idx=0)
+            self.feature_net = nn.Sequential(
+                nn.LayerNorm(cfg.feature_dim),
+                nn.Linear(cfg.feature_dim, cfg.hidden),
+                nn.GELU(),
+                nn.Dropout(cfg.dropout),
+                nn.Linear(cfg.hidden, cfg.hidden),
+                nn.GELU(),
+            )
+            self.head = nn.Sequential(
+                nn.Linear(cfg.hidden + cfg.card_emb, cfg.hidden),
+                nn.GELU(),
+                nn.Dropout(cfg.dropout),
+                nn.Linear(cfg.hidden, cfg.action_dim),
+            )
+
+        def forward(self, features, cards):
+            cards = cards.clamp(min=0, max=self.cfg.card_vocab - 1)
+            emb = self.card_emb(cards)
+            present = (cards != 0).float().unsqueeze(-1)
+            pooled = (emb * present).sum(dim=1) / present.sum(dim=1).clamp_min(1.0)
+            x = self.feature_net(features.float())
+            return self.head(torch.cat([x, pooled], dim=-1))
+
+    return TavernBCPolicy
+
+
+def decode_obs(np, obs_bytes: tuple[bytes, bytes], mask_bytes: bytes):
+    features = np.frombuffer(obs_bytes[0], dtype="<f4").copy()
+    cards = np.frombuffer(obs_bytes[1], dtype="<i4").copy()
+    mask = np.frombuffer(mask_bytes, dtype=np.uint8).astype(bool)
+    if features.shape != (FEATURE_DIM,) or cards.shape != (CARD_DIM,) or mask.shape != (ACTION_DIM,):
+        raise ValueError(f"bad obs shapes: {features.shape}, {cards.shape}, {mask.shape}")
+    return features, cards, mask
+
+
+def generate_bot_dataset(np, taverngym, *, samples: int, seed: int, max_games: int):
+    features, cards, masks, actions = [], [], [], []
+    game_count = 0
+    started = time.time()
+    while len(actions) < samples and game_count < max_games:
+        game = taverngym.Game(seed + game_count)
+        guard = 0
+        while not game.is_over() and len(actions) < samples:
+            progressed = False
+            for seat in range(game.num_players):
+                if not game.needs_action(seat):
+                    continue
+                action = int(game.bot_action(seat))
+                obs = game.observe2(seat)
+                mask_bytes = game.legal_mask(seat)
+                f, c, m = decode_obs(np, obs, mask_bytes)
+                if not m[action]:
+                    raise RuntimeError(f"bot produced illegal action {action}")
+                features.append(f)
+                cards.append(c)
+                masks.append(m)
+                actions.append(action)
+                game.step(seat, action)
+                progressed = True
+                if len(actions) >= samples:
+                    break
+            guard += 1
+            if not progressed or guard > 50000:
+                raise RuntimeError("game did not progress while generating data")
+        game_count += 1
+        if game_count % 10 == 0:
+            elapsed = time.time() - started
+            print(f"generated {len(actions)}/{samples} samples from {game_count} games in {elapsed:.1f}s", flush=True)
+
+    if len(actions) < samples:
+        raise RuntimeError(f"only generated {len(actions)} samples; increase --max-games")
+
+    return (
+        np.stack(features).astype("float32"),
+        np.stack(cards).astype("int64"),
+        np.stack(masks).astype(bool),
+        np.asarray(actions, dtype="int64"),
+    )
+
+
+def iter_minibatches(np, n: int, batch_size: int, *, shuffle: bool = True) -> Iterable:
+    order = np.arange(n)
+    if shuffle:
+        np.random.shuffle(order)
+    for start in range(0, n, batch_size):
+        yield order[start : start + batch_size]
+
+
+def train_bc(args) -> None:
+    np, torch, nn, F, taverngym = import_runtime()
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+
+    device = torch.device("cuda" if torch.cuda.is_available() and not args.cpu else "cpu")
+    print(f"device={device}", flush=True)
+    print(f"taverngym build={taverngym.build_info()}", flush=True)
+    if taverngym.OBS2_FLOATS != FEATURE_DIM or taverngym.OBS2_CARDS != CARD_DIM:
+        raise RuntimeError(f"unexpected observe2 dims: {taverngym.OBS2_FLOATS}, {taverngym.OBS2_CARDS}")
+
+    x_feat, x_card, x_mask, y = generate_bot_dataset(
+        np, taverngym, samples=args.samples, seed=args.seed, max_games=args.max_games
+    )
+    split = int(len(y) * (1.0 - args.val_ratio))
+    train_idx = np.arange(split)
+    val_idx = np.arange(split, len(y))
+
+    cfg = ModelConfig(card_vocab=max(int(x_card.max()) + 1, args.card_vocab))
+    TavernBCPolicy = build_model_class(nn, torch)
+    model = TavernBCPolicy(cfg).to(device)
+    opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+
+    best_val = float("inf")
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    best_path = output_dir / "tavern_bc_policy.pt"
+
+    def batch_loss(indexes, train: bool):
+        feat = torch.from_numpy(x_feat[indexes]).to(device)
+        card = torch.from_numpy(x_card[indexes]).to(device)
+        mask = torch.from_numpy(x_mask[indexes]).to(device)
+        target = torch.from_numpy(y[indexes]).to(device)
+        logits = model(feat, card).masked_fill(~mask, -1e9)
+        loss = F.cross_entropy(logits, target)
+        pred = logits.argmax(dim=-1)
+        acc = (pred == target).float().mean()
+        if train:
+            opt.zero_grad(set_to_none=True)
+            loss.backward()
+            nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
+            opt.step()
+        return float(loss.detach().cpu()), float(acc.detach().cpu())
+
+    for epoch in range(1, args.epochs + 1):
+        model.train()
+        train_losses, train_accs = [], []
+        for idx in iter_minibatches(np, len(train_idx), args.batch_size, shuffle=True):
+            loss, acc = batch_loss(train_idx[idx], True)
+            train_losses.append(loss)
+            train_accs.append(acc)
+
+        model.eval()
+        val_losses, val_accs = [], []
+        with torch.no_grad():
+            for idx in iter_minibatches(np, len(val_idx), args.batch_size, shuffle=False):
+                loss, acc = batch_loss(val_idx[idx], False)
+                val_losses.append(loss)
+                val_accs.append(acc)
+
+        train_loss, train_acc = float(np.mean(train_losses)), float(np.mean(train_accs))
+        val_loss, val_acc = float(np.mean(val_losses)), float(np.mean(val_accs))
+        print(
+            f"epoch={epoch} train_loss={train_loss:.4f} train_acc={train_acc:.4f} "
+            f"val_loss={val_loss:.4f} val_acc={val_acc:.4f}",
+            flush=True,
+        )
+        if val_loss < best_val:
+            best_val = val_loss
+            save_checkpoint(torch, model, cfg, best_path, args, val_loss, val_acc, taverngym)
+            print(f"saved {best_path}", flush=True)
+
+    evaluate_policy(np, torch, taverngym, model, device, args.eval_games, args.seed + 100000)
+    print(f"final checkpoint: {best_path}", flush=True)
+
+
+def save_checkpoint(torch, model, cfg: ModelConfig, path: Path, args, val_loss, val_acc, taverngym) -> None:
+    payload = {
+        "model_type": "TavernBCPolicy",
+        "model_config": asdict(cfg),
+        "state_dict": model.state_dict(),
+        "ruleset_id": ARENA_RULESET_ID,
+        "catalog_sha256": ARENA_CATALOG_SHA256,
+        "taverngym_build_info": taverngym.build_info(),
+        "train_args": vars(args),
+        "metrics": {"val_loss": float(val_loss), "val_acc": float(val_acc)},
+    }
+    torch.save(payload, path)
+
+
+def choose_model_action(np, torch, game, seat: int, model, device) -> int:
+    f, c, m = decode_obs(np, game.observe2(seat), game.legal_mask(seat))
+    with torch.no_grad():
+        logits = model(
+            torch.from_numpy(f).unsqueeze(0).to(device),
+            torch.from_numpy(c.astype("int64")).unsqueeze(0).to(device),
+        )[0].detach().cpu().numpy()
+    logits = np.where(m, logits, -np.inf)
+    action = int(np.argmax(logits))
+    if not m[action]:
+        raise RuntimeError("model selected illegal action after masking")
+    return action
+
+
+def evaluate_policy(np, torch, taverngym, model, device, games: int, seed: int) -> None:
+    placements = []
+    model.eval()
+    for i in range(games):
+        game = taverngym.Game(seed + i)
+        guard = 0
+        while not game.is_over():
+            progressed = False
+            for seat in range(game.num_players):
+                if not game.needs_action(seat):
+                    continue
+                action = choose_model_action(np, torch, game, seat, model, device) if seat == 0 else int(game.bot_action(seat))
+                game.step(seat, action)
+                progressed = True
+            guard += 1
+            if not progressed or guard > 50000:
+                raise RuntimeError("evaluation game did not progress")
+        placements.append(int(game.placements()[0]))
+    arr = np.asarray(placements)
+    print(
+        "eval "
+        f"games={games} avg_place={arr.mean():.3f} top4={(arr <= 4).mean():.3f} "
+        f"first={(arr == 1).mean():.3f} placements={placements}",
+        flush=True,
+    )
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--install", action="store_true", help="apply observe2 patch if needed and pip install dependencies")
+    parser.add_argument("--train", action="store_true", help="run behavior-cloning training")
+    parser.add_argument("--cpu", action="store_true", help="force CPU even if CUDA is available")
+    parser.add_argument("--samples", type=int, default=50000)
+    parser.add_argument("--max-games", type=int, default=5000)
+    parser.add_argument("--epochs", type=int, default=8)
+    parser.add_argument("--batch-size", type=int, default=512)
+    parser.add_argument("--lr", type=float, default=3e-4)
+    parser.add_argument("--weight-decay", type=float, default=1e-4)
+    parser.add_argument("--grad-clip", type=float, default=1.0)
+    parser.add_argument("--val-ratio", type=float, default=0.1)
+    parser.add_argument("--eval-games", type=int, default=16)
+    parser.add_argument("--seed", type=int, default=20261029)
+    parser.add_argument("--card-vocab", type=int, default=4096)
+    parser.add_argument("--output-dir", default=os.getenv("OUTPUT_PATH", "outputs"))
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    if not args.install and not args.train:
+        args.install = True
+        args.train = True
+    if args.install:
+        install_environment()
+    if args.train:
+        train_bc(args)
+
+
+if __name__ == "__main__":
+    main()
