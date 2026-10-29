@@ -33,9 +33,14 @@ results to `independent_evaluation.json` without selecting on that holdout.
 Online old-policy sampling completed: 517 accepted decisions across 5 complete
 games. Local temporary authentication file removed after completion.
 
-OpenI private model `autotavern-guide-warmstart-917216` exists but is empty:
-hidden Dropzone input cannot yet be populated using the browser uploader.
+OpenI private model `autotavern-guide-warmstart-917216` now contains the starting
+checkpoint. Official OpenI SDK 3.0.1 upload succeeded using existing Git
+authentication, restricted to the OpenI API origin; downloading the private
+file through that SDK verified the exact expected SHA256. No authentication
+material was saved to source or cloud. Browser Dropzone upload remained unusable.
 The A100 template form is open at
 https://openi.pcl.ac.cn/cloudbrains/create?tmpl=33eb24b6-18ca-4619-8fe1-874ebc42f860 .
 Native page search successfully brings offscreen controls into view; ordinary
-scroll calls did not. No new GPU training task has been submitted yet.
+scroll calls did not. `train_guide_gpu.py` provides the additional warm-start,
+teacher, low learning-rate and evaluation parameters for the existing template.
+No new GPU training task has been submitted yet.
