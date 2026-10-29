@@ -20,8 +20,10 @@ python train.py --install --train --samples 2000 --epochs 1 --batch-size 256 --e
 ```
 
 The script uses CUDA automatically when PyTorch sees the BI-V100 / ILUVATAR GPGPU as a CUDA
-device. If the image's PyTorch build cannot see the card, the script falls back to CPU unless
-`--cpu` is passed explicitly.
+device. Many ILUVATAR images ship a platform-adapted PyTorch build, so `train.py --install`
+keeps an existing `torch` package and only installs `torch` from pip when it is missing. If the
+image's PyTorch build cannot see the card, the script falls back to CPU unless `--cpu` is passed
+explicitly.
 
 Outputs:
 

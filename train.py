@@ -25,6 +25,7 @@ import sys
 import time
 import urllib.request
 from dataclasses import asdict, dataclass
+from importlib.util import find_spec
 from pathlib import Path
 from typing import Iterable
 
@@ -85,7 +86,15 @@ def ensure_observe2_patch() -> None:
 def install_environment() -> None:
     """Install dependencies inside the OpenI job container."""
     ensure_observe2_patch()
-    run([sys.executable, "-m", "pip", "install", "--upgrade", "pip", "maturin", "torch", "numpy"])
+    run([sys.executable, "-m", "pip", "install", "--upgrade", "pip", "maturin", "numpy"])
+    # ILUVATAR / BI-V100 images often carry a platform-adapted torch build.
+    # Do not overwrite it unless torch is genuinely absent.
+    if find_spec("torch") is None:
+        run([sys.executable, "-m", "pip", "install", "torch"])
+    else:
+        import torch
+
+        print(f"keeping existing torch={torch.__version__}", flush=True)
     run([sys.executable, "-m", "pip", "install", "."])
 
 
