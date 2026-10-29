@@ -19,11 +19,13 @@ import argparse
 import hashlib
 import json
 import os
+import platform
 import random
 import shutil
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.request
 from dataclasses import asdict, dataclass
 from importlib.util import find_spec
@@ -94,10 +96,25 @@ def install_environment() -> None:
     cargo_home = Path(os.environ.get("CARGO_HOME", Path.home() / ".cargo"))
     os.environ["PATH"] = str(cargo_home / "bin") + os.pathsep + os.environ["PATH"]
     if shutil.which("rustup") is None:
-        script = Path("/tmp/autotavern-rustup-init.sh")
-        run(["curl", "-fL", "--retry", "3", "--connect-timeout", "20",
-             "--max-time", "120", "-o", str(script), "https://rsproxy.cn/rustup-init.sh"])
-        run(["sh", str(script), "-y", "--profile", "minimal", "--default-toolchain", "none"])
+        # Minimal BI-V100 images have neither curl nor wget. Download the
+        # standalone installer with Python rather than the shell bootstrap.
+        architecture = {"x86_64": "x86_64", "aarch64": "aarch64"}.get(platform.machine())
+        if platform.system() != "Linux" or architecture is None:
+            raise RuntimeError("automatic Rust installation requires Linux x86_64/aarch64")
+        installer = Path("/tmp/autotavern-rustup-init")
+        url = f"https://rsproxy.cn/rustup/dist/{architecture}-unknown-linux-gnu/rustup-init"
+        for attempt in range(1, 4):
+            try:
+                print(f"downloading Rust installer (attempt {attempt}): {url}", flush=True)
+                with urllib.request.urlopen(url, timeout=120) as response, installer.open("wb") as target:
+                    shutil.copyfileobj(response, target)
+                break
+            except (OSError, urllib.error.URLError):
+                installer.unlink(missing_ok=True)
+                if attempt == 3:
+                    raise
+        installer.chmod(0o755)
+        run([str(installer), "-y", "--profile", "minimal", "--default-toolchain", "none"])
     run(["rustup", "toolchain", "install", os.environ["RUSTUP_TOOLCHAIN"],
          "--profile", "minimal"])
     cargo_home.mkdir(parents=True, exist_ok=True)
