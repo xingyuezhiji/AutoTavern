@@ -6,8 +6,48 @@ All normal train.py hyperparameters and C2Net output handling are preserved.
 """
 from pathlib import Path
 import os
+import shutil
 import subprocess
 import sys
+
+
+def gpu_preflight():
+    """Read driver state and verify uncached allocation before expensive setup."""
+    for executable in ("ix-smi", "nvidia-smi"):
+        command = shutil.which(executable)
+        if command:
+            subprocess.run([command], timeout=15, check=False)
+    # Cache bypass is a controlled GPU allocator experiment, not CPU fallback.
+    os.environ["PYTORCH_NO_CUDA_MEMORY_CACHING"] = "1"
+    os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "max_split_size_mb:128")
+    probe = """
+import faulthandler, json, os, socket, torch
+faulthandler.enable()
+faulthandler.dump_traceback_later(15, repeat=True)
+print(json.dumps({"event":"gpu_preflight","host":socket.gethostname(),
+ "torch":torch.__version__,"torch_path":torch.__file__,
+ "cuda_visible":os.getenv("CUDA_VISIBLE_DEVICES"),
+ "no_memory_cache":os.getenv("PYTORCH_NO_CUDA_MEMORY_CACHING")}),flush=True)
+if not torch.cuda.is_available():
+    raise RuntimeError("GPU unavailable; CPU training prohibited")
+torch.cuda.set_device(0)
+print("GPU uncached allocation: "+torch.cuda.get_device_name(0),flush=True)
+x=torch.empty(1,device="cuda")
+x.fill_(1)
+torch.cuda.synchronize()
+assert x.item()==1
+print("GPU uncached allocation passed",flush=True)
+"""
+    child = subprocess.Popen([sys.executable, "-u", "-c", probe],
+                             start_new_session=True)
+    try:
+        result = child.wait(timeout=60)
+    except subprocess.TimeoutExpired:
+        # Do not synchronously wait again for an unresponsive driver process.
+        child.kill()
+        raise RuntimeError("Uncached GPU allocation timed out; no training started")
+    if result:
+        raise RuntimeError(f"GPU preflight failed ({result}); no CPU fallback")
 
 
 def main():
@@ -16,6 +56,7 @@ def main():
         raise ValueError("This OpenI entry is GPU-only; --cpu is prohibited")
     # The template passes hyperparameters; this entry owns the two phases.
     arguments = [arg for arg in arguments if arg not in {"--install", "--train"}]
+    gpu_preflight()
     trainer = str(Path(__file__).resolve().with_name("train.py"))
     subprocess.run([sys.executable, "-u", trainer, "--install", *arguments],
                    check=True)
