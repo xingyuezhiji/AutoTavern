@@ -20,3 +20,22 @@ def load_resume(torch, path, *, ruleset, catalog, build, expected_sha256=None):
         raise ValueError("resume checkpoint observation/action mismatch")
     print(f"resume checkpoint={source.name} sha256={digest}", flush=True)
     return payload
+
+
+def load_policy_state(model, payload):
+    """Only allow legacy migration into a newly zero-initialized identity head."""
+    legacy = not payload["model_config"].get("action_identity", False)
+    if legacy and model.cfg.action_identity:
+        expected = {"identity_head.query.weight", "identity_head.query.bias"}
+        actual = set(model.state_dict()) - set(payload["state_dict"])
+        if actual != expected:
+            raise ValueError("unexpected legacy migration parameter keys")
+        state = dict(payload["state_dict"])
+        for key in expected:
+            initialized = model.state_dict()[key]
+            if initialized.count_nonzero().item() != 0:
+                raise ValueError("legacy identity migration must preserve original logits")
+            state[key] = initialized
+        model.load_state_dict(state, strict=True)
+    else:
+        model.load_state_dict(payload["state_dict"], strict=True)

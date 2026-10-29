@@ -170,6 +170,7 @@ class ModelConfig:
     card_emb: int = 32
     hidden: int = 512
     dropout: float = 0.05
+    action_identity: bool = False
 
 
 def build_model_class(nn, torch):
@@ -192,6 +193,9 @@ def build_model_class(nn, torch):
                 nn.Dropout(cfg.dropout),
                 nn.Linear(cfg.hidden, cfg.action_dim),
             )
+            if cfg.action_identity:
+                from action_identity import build_identity_head
+                self.identity_head = build_identity_head(nn, torch, cfg)
 
         def forward(self, features, cards):
             cards = cards.clamp(min=0, max=self.cfg.card_vocab - 1)
@@ -199,7 +203,10 @@ def build_model_class(nn, torch):
             present = (cards != 0).float().unsqueeze(-1)
             pooled = (emb * present).sum(dim=1) / present.sum(dim=1).clamp_min(1.0)
             x = self.feature_net(features.float())
-            return self.head(torch.cat([x, pooled], dim=-1))
+            logits = self.head(torch.cat([x, pooled], dim=-1))
+            if self.cfg.action_identity:
+                logits = logits + self.identity_head(x, emb, cards, pooled)
+            return logits
 
     return TavernBCPolicy
 
@@ -403,13 +410,16 @@ def train_bc(args) -> None:
 
     cfg = (ModelConfig(**resume_payload["model_config"]) if resume_payload else
            ModelConfig(card_vocab=max(int(x_card.max()) + 1, args.card_vocab)))
+    if args.action_identity:
+        cfg.action_identity = True
     if int(x_card.max()) >= cfg.card_vocab:
         raise ValueError("sample card vocabulary exceeds resumed model vocabulary")
     TavernBCPolicy = build_model_class(nn, torch)
     print(f"moving policy to {device}", flush=True)
     model = TavernBCPolicy(cfg)
     if resume_payload:
-        model.load_state_dict(resume_payload["state_dict"], strict=True)
+        from checkpoint_resume import load_policy_state
+        load_policy_state(model, resume_payload)
     model = move_policy(torch, model, device)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
@@ -421,7 +431,7 @@ def train_bc(args) -> None:
         metrics = resume_payload["metrics"]
         save_checkpoint(torch, model, cfg, best_path, args,
                         metrics["val_loss"], metrics["val_acc"], taverngym)
-        shutil.copy2(args.resume, output_dir / "tavern_initial.pt")
+        shutil.copy2(best_path, output_dir / "tavern_initial.pt")
         print("Warm start loaded; initial policy preserved before updates", flush=True)
 
     def batch_loss(indexes, train: bool):
@@ -478,7 +488,7 @@ def train_bc(args) -> None:
                                    args.final_eval_games, args.final_eval_seed)
     reports = {"selected": final_report}
     if resume_payload:
-        initial = TavernBCPolicy(cfg)
+        initial = TavernBCPolicy(ModelConfig(**resume_payload["model_config"]))
         initial.load_state_dict(resume_payload["state_dict"], strict=True)
         # CPU inference is allowed; all parameter updates above stay on GPU.
         reports["initial"] = evaluate_policy(
@@ -562,6 +572,8 @@ def parse_args():
     parser.add_argument("--epochs", type=int, default=8)
     parser.add_argument("--resume", help="checkpoint path, or auto for attached C2Net model")
     parser.add_argument("--resume-sha256", help="required starting artifact SHA256")
+    parser.add_argument("--action-identity", action="store_true",
+                        help="enable zero-initialized action-aligned card identity head")
     parser.add_argument("--batch-size", type=int, default=512)
     parser.add_argument("--lr", type=float, default=3e-4)
     parser.add_argument("--weight-decay", type=float, default=1e-4)

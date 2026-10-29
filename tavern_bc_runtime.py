@@ -28,6 +28,7 @@ class ModelConfig:
     card_emb: int = 32
     hidden: int = 512
     dropout: float = 0.05
+    action_identity: bool = False
 
 
 class TavernBCPolicy(nn.Module):
@@ -49,6 +50,9 @@ class TavernBCPolicy(nn.Module):
             nn.Dropout(cfg.dropout),
             nn.Linear(cfg.hidden, cfg.action_dim),
         )
+        if cfg.action_identity:
+            from action_identity import build_identity_head
+            self.identity_head = build_identity_head(nn, torch, cfg)
 
     def forward(self, features, cards):
         cards = cards.clamp(min=0, max=self.cfg.card_vocab - 1)
@@ -56,7 +60,10 @@ class TavernBCPolicy(nn.Module):
         present = (cards != 0).float().unsqueeze(-1)
         pooled = (emb * present).sum(dim=1) / present.sum(dim=1).clamp_min(1.0)
         x = self.feature_net(features.float())
-        return self.head(torch.cat([x, pooled], dim=-1))
+        logits = self.head(torch.cat([x, pooled], dim=-1))
+        if self.cfg.action_identity:
+            logits = logits + self.identity_head(x, emb, cards, pooled)
+        return logits
 
 
 _MODEL = None
@@ -79,8 +86,8 @@ def _load_model():
 
 def predict(observation, context):
     model = _load_model()
-    features = torch.from_numpy(np.asarray(observation["features"], dtype=np.float32)).unsqueeze(0).to(_DEVICE)
-    cards = torch.from_numpy(np.asarray(observation["cards"], dtype=np.int64)).unsqueeze(0).to(_DEVICE)
+    features = torch.from_numpy(np.array(observation["features"], dtype=np.float32, copy=True)).unsqueeze(0).to(_DEVICE)
+    cards = torch.from_numpy(np.array(observation["cards"], dtype=np.int64, copy=True)).unsqueeze(0).to(_DEVICE)
     with torch.no_grad():
         logits = model(features, cards)[0].detach().cpu().numpy()
     mask = limit_action_mask(observation["features"],
