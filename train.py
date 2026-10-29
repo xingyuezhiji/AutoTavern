@@ -693,7 +693,7 @@ def main() -> None:
         if not destination.is_relative_to(output_root):
             raise ValueError("--output-dir must be within c2net output_path")
         args.output_dir = str(destination)
-        if args.rollout_data:
+        if args.rollout_data and args.train:
             args.rollout_data = _resolve_rollout_data(ctx, args.rollout_data)
         upload = upload_output
         print(f"C2Net output directory: {args.output_dir}", flush=True)
