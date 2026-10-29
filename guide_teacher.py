@@ -29,6 +29,12 @@ ECONOMY = re.compile(
     r"|\bcost[^.!]{0,25}\bless\b|\bdiscount\b",
     re.I,
 )
+LINEUP_UTILITY = re.compile(
+    r"\bgolden(?:izer)?\b|\brefresh(?:ed|es)?\b"
+    r"|\bspend\b[^.!]{0,20}\bgold\b"
+    r"|\btrinkets?\b[^.!]{0,40}\bfree\b",
+    re.I,
+)
 
 
 def card_of(item):
@@ -61,8 +67,18 @@ def score_card(item, owned, *, offer=False):
     if cid == "BG36_640" and owned["BG35_883"]:
         score += 12
     # Economy preference applies especially to trinket and Dark Gift offers.
-    if ECONOMY.search(text + " " + name):
+    economy = ECONOMY.search(text + " " + name)
+    if economy:
         score += 22 if offer else 4
+    # Powerful lineup effects remain useful without being mislabeled as money.
+    # The guide prefers economy when suitable; it still needs scaling/core cards.
+    if not economy and LINEUP_UTILITY.search(text):
+        score += 20 if offer else 4
+    if offer and card.get("kind", "").startswith("trinket"):
+        if "Brann Bronzebeard" in text:
+            score += 18 + 8 * bool(owned["BG36_640"] or owned["BG28_633"])
+        if "Titus Rivendare" in text:
+            score += 14
     atk = item.get("atk", card.get("atk", 0))
     hp = item.get("hp", card.get("hp", 0))
     score += min(25, (max(0, atk) + max(0, hp)) ** 0.5)

@@ -28,6 +28,15 @@ Economy labels must match resource gains or purchasing/upgrade discounts.
 The old broad substring matching incorrectly included Golden cards, paid Refresh
 buffs and stats triggered by spending Gold. Correct the demonstrator regex and
 verify both positive resource cases and negative buff/Golden cases.
+Retain useful Golden/refresh/spending-triggered effects as a separate lineup
+utility preference. Actual economy gets 22 points; other lineup utility gets 20
+on offers and 4 on normal cards. Brann/Titus trinkets get explicit core value.
+This prevents truthful labels from removing useful scaling preferences.
+
+Development seed 20280901, 128 games, is reserved for demonstrator tuning:
+legacy broad scoring 75.0% top4 / 3.258 mean; corrected money-only preference
+60.9% / 3.820; initial utility rebalance 63.3% / 3.750; selected utility scoring
+73.4% / 3.453. None of these are trained-policy acceptance results.
 
 Verify inference invariance before migration, exact warm-start parity, candidate
 permutation sensitivity after nonzero query assignment, action mapping, strict
