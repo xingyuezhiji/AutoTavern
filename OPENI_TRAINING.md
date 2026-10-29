@@ -43,7 +43,8 @@ and the small validation sample limit how much a better rank demonstrates.
 The script uses CUDA after an isolated policy-transfer / forward / backward / optimizer
 check passes. The check has a 180-second timeout: GPU detection alone is insufficient on
 CoreX, where a card can be visible while `model.to("cuda")` hangs. If the check fails
-or times out, the script reports the reason and trains on CPU. `--cpu` skips the GPU check.
+or times out, the script raises an error and exits. Automatic CPU fallback is
+disabled. `--cpu` is reserved for an explicitly requested local smoke run.
 
 For CoreX CPU-to-CUDA transfers, the script follows the workaround from successful
 [BenchCAD task 898380](https://openi.pcl.ac.cn/cloudbrains/detail/898380)

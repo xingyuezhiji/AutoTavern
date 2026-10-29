@@ -313,10 +313,10 @@ print("CUDA probe passed", flush=True)
             check=False,
         )
     except subprocess.TimeoutExpired:
-        print("CUDA training probe timed out; using CPU for this run", flush=True)
+        print("CUDA training probe timed out", flush=True)
         return False
     if result.returncode != 0:
-        print(f"CUDA training probe failed (exit={result.returncode}); using CPU for this run", flush=True)
+        print(f"CUDA training probe failed (exit={result.returncode})", flush=True)
         return False
     return True
 
@@ -355,6 +355,8 @@ def train_bc(args) -> None:
     # Vendor runtimes may block allocation in another process after detection
     # initializes a context in the parent.
     use_cuda = not args.cpu and cuda_training_ready()
+    if not args.cpu and not use_cuda:
+        raise RuntimeError("CUDA training probe failed; CPU fallback is disabled")
     np, torch, nn, F, taverngym = import_runtime()
     random.seed(args.seed)
     np.random.seed(args.seed)
