@@ -19,11 +19,13 @@ cd AutoTavern
 python train.py --install --train --samples 2000 --epochs 1 --batch-size 256 --eval-games 2
 ```
 
-The script uses CUDA automatically when PyTorch sees the BI-V100 / ILUVATAR GPGPU as a CUDA
-device. Many ILUVATAR images ship a platform-adapted PyTorch build, so `train.py --install`
-keeps an existing `torch` package and only installs `torch` from pip when it is missing. If the
-image's PyTorch build cannot see the card, the script falls back to CPU unless `--cpu` is passed
-explicitly.
+The script uses CUDA after an isolated policy-transfer / forward / backward / optimizer
+check passes. The check has a 45-second timeout: GPU detection alone is insufficient on
+CoreX, where a card can be visible while `model.to("cuda")` hangs. If the check fails
+or times out, the script reports the reason and trains on CPU. `--cpu` skips the GPU check.
+
+Many ILUVATAR images ship a platform-adapted PyTorch build, so `train.py --install`
+keeps the existing `torch` and NumPy 1.x packages. It only installs torch if missing.
 
 Outputs:
 

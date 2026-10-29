@@ -265,6 +265,44 @@ def iter_minibatches(np, n: int, batch_size: int, *, shuffle: bool = True) -> It
         yield order[start : start + batch_size]
 
 
+def cuda_training_ready(timeout: float = 45) -> bool:
+    """Exercise the actual policy in a killable process before touching GPU here."""
+    probe = """
+import faulthandler
+import torch
+from train import ModelConfig, build_model_class
+faulthandler.enable()
+faulthandler.dump_traceback_later(20, repeat=True)
+torch.set_num_threads(4)
+print("CUDA probe: copying policy", flush=True)
+cfg = ModelConfig()
+model = build_model_class(torch.nn, torch)(cfg).to("cuda")
+print("CUDA probe: forward/backward/optimizer", flush=True)
+opt = torch.optim.AdamW(model.parameters())
+features = torch.zeros(2, cfg.feature_dim, device="cuda")
+cards = torch.zeros(2, cfg.card_dim, dtype=torch.long, device="cuda")
+loss = model(features, cards).square().mean()
+loss.backward()
+opt.step()
+torch.cuda.synchronize()
+assert torch.isfinite(loss).item()
+print("CUDA probe passed", flush=True)
+"""
+    print(f"checking CUDA training in isolated process (timeout={timeout}s)", flush=True)
+    try:
+        result = subprocess.run(
+            [sys.executable, "-u", "-c", probe], cwd=str(REPO_ROOT), timeout=timeout,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        print("CUDA training probe timed out; using CPU for this run", flush=True)
+        return False
+    if result.returncode != 0:
+        print(f"CUDA training probe failed (exit={result.returncode}); using CPU for this run", flush=True)
+        return False
+    return True
+
+
 def train_bc(args) -> None:
     np, torch, nn, F, taverngym = import_runtime()
     random.seed(args.seed)
@@ -272,7 +310,8 @@ def train_bc(args) -> None:
     torch.manual_seed(args.seed)
     torch.set_num_threads(min(4, os.cpu_count() or 1))
 
-    device = torch.device("cuda" if torch.cuda.is_available() and not args.cpu else "cpu")
+    use_cuda = not args.cpu and torch.cuda.is_available() and cuda_training_ready()
+    device = torch.device("cuda" if use_cuda else "cpu")
     print(f"device={device}", flush=True)
     if device.type == "cuda":
         print(f"gpu={torch.cuda.get_device_name(0)}", flush=True)
