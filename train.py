@@ -6,7 +6,7 @@ but cannot clone GitHub directly. It can:
 
 1. verify/apply the public observe2 patch;
 2. install TavernGym and PyTorch dependencies;
-3. train a behavior-cloning policy from TavernGym's scripted bot;
+3. train behavior cloning and optional PPO from complete-game outcome rewards;
 4. export a checkpoint that can be loaded locally by `tavern_policy.py`.
 
 No arena key, live match state, model registry credential, or game save is read
