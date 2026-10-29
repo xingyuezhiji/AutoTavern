@@ -13,7 +13,22 @@ CORES = {
     "BG28_633": 23, "BG36_762": 18, "BG36_701": 16,
     "BG32_873": 14,
 }
-ECONOMY = re.compile(r"gold|coin|free|refresh|cost.*less|discount", re.I)
+# Match actual resources/discounts, not "Golden", spending Gold for stats,
+# or buffs triggered by paid Refreshes.
+ECONOMY = re.compile(
+    r"\b(?:gain|get|earn)\b[^.!]{0,55}\bgold\b"
+    r"|\b(?:increase|maximum)\b[^.!]{0,35}\b(?:maximum\s+)?gold\b"
+    r"|\bget\b[^.!]{0,30}\bcoins?\b"
+    r"|\bfree\s+refresh(?:es)?\b"
+    r"|\brefresh(?:es)?\b[^.!]{0,35}\bfree\b"
+    r"|\b(?:buy|cost)[^.!]{0,35}\bfree\b"
+    r"|\bfree\b[^.!]{0,20}\b(?:minion|card|spell)s?\b"
+    r"|\bcosts?\s+health\s+instead\s+of\s+gold\b"
+    r"|\breduce\b[^.!]{0,35}\bcost\b"
+    r"|\bcosts?\s*\([012]\)"
+    r"|\bcost[^.!]{0,25}\bless\b|\bdiscount\b",
+    re.I,
+)
 
 
 def card_of(item):

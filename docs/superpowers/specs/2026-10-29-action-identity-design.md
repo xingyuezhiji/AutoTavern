@@ -24,6 +24,11 @@ Zero initialization must exactly preserve initial logits and runtime parity.
 Old config defaults remain valid. The initial checkpoint saved during migration
 uses the new config so PPO development selection can load it strictly.
 
+Economy labels must match resource gains or purchasing/upgrade discounts.
+The old broad substring matching incorrectly included Golden cards, paid Refresh
+buffs and stats triggered by spending Gold. Correct the demonstrator regex and
+verify both positive resource cases and negative buff/Golden cases.
+
 Verify inference invariance before migration, exact warm-start parity, candidate
 permutation sensitivity after nonzero query assignment, action mapping, strict
 rejection of unexpected keys and matching training/runtime outputs. These are

@@ -11,12 +11,14 @@ same head implementation in training and local inference.
 - [x] Inspect observe2 and action ABI; reproduce slot-permutation invariance.
 - [x] Design seven contextual query groups using shop, board, hand and choice
   slices; document strict migration and evaluation conditions.
-- [ ] Implement `action_identity.py`; update `train.py`,
+- [x] Implement `action_identity.py`; update `train.py`,
   `checkpoint_resume.py` and `tavern_bc_runtime.py`.
-- [ ] Run CPU inference checks for exact initial parity, indexed permutation
+- [x] Run CPU inference checks for exact initial parity, indexed permutation
   response, output dimensions and strict migration rejection.
+- [x] Correct actual economy effect matching in `guide_teacher.py`; verify seven
+  positive resource/discount texts and four negative Golden/buff texts.
 - [ ] Finish task 917362; verify all artifacts and independent evaluation.
-- [ ] Add GPU entrypoint with fresh train/development/final seeds, larger guide
+- [x] Add GPU entrypoint with fresh train/development/final seeds, larger guide
   data and stronger supervised adaptation; retain the strongest initial fallback.
 - [ ] Commit only task-related files, push `openi-train`, submit using the existing
   user-provided A100 template, monitor through failures and retrieve artifacts.
