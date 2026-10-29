@@ -20,6 +20,7 @@ import hashlib
 import json
 import os
 import random
+import shutil
 import subprocess
 import sys
 import time
@@ -86,7 +87,29 @@ def ensure_observe2_patch() -> None:
 def install_environment() -> None:
     """Install dependencies inside the OpenI job container."""
     ensure_observe2_patch()
-    run([sys.executable, "-m", "pip", "install", "--upgrade", "pip", "maturin", "numpy"])
+    # Avoid maturin's implicit Rust bootstrap over a slow overseas connection.
+    os.environ.setdefault("RUSTUP_DIST_SERVER", "https://rsproxy.cn")
+    os.environ.setdefault("RUSTUP_UPDATE_ROOT", "https://rsproxy.cn/rustup")
+    os.environ.setdefault("RUSTUP_TOOLCHAIN", "1.98.1")
+    cargo_home = Path(os.environ.get("CARGO_HOME", Path.home() / ".cargo"))
+    os.environ["PATH"] = str(cargo_home / "bin") + os.pathsep + os.environ["PATH"]
+    if shutil.which("rustup") is None:
+        script = Path("/tmp/autotavern-rustup-init.sh")
+        run(["curl", "-fL", "--retry", "3", "--connect-timeout", "20",
+             "--max-time", "120", "-o", str(script), "https://rsproxy.cn/rustup-init.sh"])
+        run(["sh", str(script), "-y", "--profile", "minimal", "--default-toolchain", "none"])
+    run(["rustup", "toolchain", "install", os.environ["RUSTUP_TOOLCHAIN"],
+         "--profile", "minimal"])
+    cargo_home.mkdir(parents=True, exist_ok=True)
+    config = cargo_home / "config.toml"
+    if not config.exists():
+        config.write_text(
+            '[source.crates-io]\nreplace-with = "rsproxy-sparse"\n'
+            '[source.rsproxy-sparse]\nregistry = "sparse+https://rsproxy.cn/index/"\n'
+            '[net]\nretry = 3\n[http]\ntimeout = 120\n', encoding="utf-8")
+    run(["rustc", "--version"])
+    # Torch 2.1 in the BI-V100 image requires the NumPy 1.x ABI.
+    run([sys.executable, "-m", "pip", "install", "maturin>=1.15,<2", "numpy>=1.24,<2"])
     # ILUVATAR / BI-V100 images often carry a platform-adapted torch build.
     # Do not overwrite it unless torch is genuinely absent.
     if find_spec("torch") is None:
@@ -95,7 +118,7 @@ def install_environment() -> None:
         import torch
 
         print(f"keeping existing torch={torch.__version__}", flush=True)
-    run([sys.executable, "-m", "pip", "install", "."])
+    run([sys.executable, "-m", "pip", "install", "--no-build-isolation", "."])
 
 
 def import_runtime():
@@ -218,9 +241,12 @@ def train_bc(args) -> None:
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
+    torch.set_num_threads(min(4, os.cpu_count() or 1))
 
     device = torch.device("cuda" if torch.cuda.is_available() and not args.cpu else "cpu")
     print(f"device={device}", flush=True)
+    if device.type == "cuda":
+        print(f"gpu={torch.cuda.get_device_name(0)}", flush=True)
     print(f"taverngym build={taverngym.build_info()}", flush=True)
     if taverngym.OBS2_FLOATS != FEATURE_DIM or taverngym.OBS2_CARDS != CARD_DIM:
         raise RuntimeError(f"unexpected observe2 dims: {taverngym.OBS2_FLOATS}, {taverngym.OBS2_CARDS}")
@@ -361,12 +387,26 @@ def parse_args():
     parser.add_argument("--eval-games", type=int, default=16)
     parser.add_argument("--seed", type=int, default=20261029)
     parser.add_argument("--card-vocab", type=int, default=4096)
-    parser.add_argument("--output-dir", default=os.getenv("OUTPUT_PATH", "outputs"))
+    parser.add_argument("--output-dir", default=None)
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    upload = None
+    if find_spec("c2net") is not None:
+        from c2net.context import prepare, upload_output
+
+        ctx = prepare()
+        output_root = Path(ctx.output_path).resolve()
+        destination = Path(args.output_dir).resolve() if args.output_dir else output_root
+        if not destination.is_relative_to(output_root):
+            raise ValueError("--output-dir must be within c2net output_path")
+        args.output_dir = str(destination)
+        upload = upload_output
+        print(f"C2Net output directory: {args.output_dir}", flush=True)
+    else:
+        args.output_dir = args.output_dir or os.getenv("OUTPUT_PATH", "outputs")
     if not args.install and not args.train:
         args.install = True
         args.train = True
@@ -374,6 +414,9 @@ def main() -> None:
         install_environment()
     if args.train:
         train_bc(args)
+        if upload is not None:
+            upload()
+            print("C2Net output upload returned", flush=True)
 
 
 if __name__ == "__main__":
