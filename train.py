@@ -364,6 +364,31 @@ def move_policy(torch, model, device):
     return model._apply(lambda tensor: move_tensor(torch, tensor, device))
 
 
+def load_rollout_dataset(np, path: Path):
+    """Load self-play rollouts (npz produced by tavern-arena/selfplay.py).
+
+    Returns (features float16, cards int16, action_mask uint8, action int16, game_ids int32).
+    Samples are keyed by the rollout `seed`, so validation splits whole games.
+    """
+    data = np.load(path)
+    required = ("features", "cards", "action_mask", "action", "seed")
+    missing = [k for k in required if k not in data.files]
+    if missing:
+        raise ValueError(f"{path} missing arrays: {missing}")
+    features = data["features"]
+    cards = data["cards"]
+    mask = data["action_mask"]
+    action = data["action"]
+    game_ids = data["seed"]
+    if features.shape[1] != FEATURE_DIM or cards.shape[1] != CARD_DIM:
+        raise ValueError(f"unexpected rollout dims: {features.shape}, {cards.shape}")
+    if mask.shape[1] != ACTION_DIM:
+        raise ValueError(f"unexpected action mask width: {mask.shape}")
+    print(f"rollout dataset {path}: samples={len(action)} games={len(np.unique(game_ids))}",
+          flush=True)
+    return features, cards, mask, action, game_ids
+
+
 def train_bc(args) -> None:
     # Keep the parent CUDA context untouched until the child has exited.
     # Vendor runtimes may block allocation in another process after detection
@@ -392,10 +417,13 @@ def train_bc(args) -> None:
             torch, args.resume, ruleset=ARENA_RULESET_ID,
             catalog=ARENA_CATALOG_SHA256, build=taverngym.build_info(),
             expected_sha256=args.resume_sha256)
-    x_feat, x_card, x_mask, y, game_ids = generate_bot_dataset(
-        np, taverngym, samples=args.samples, seed=args.seed, max_games=args.max_games,
-        teacher=args.teacher
-    )
+    if args.rollout_data:
+        x_feat, x_card, x_mask, y, game_ids = load_rollout_dataset(np, Path(args.rollout_data))
+    else:
+        x_feat, x_card, x_mask, y, game_ids = generate_bot_dataset(
+            np, taverngym, samples=args.samples, seed=args.seed, max_games=args.max_games,
+            teacher=args.teacher
+        )
     print(f"dataset ready: samples={len(y)}", flush=True)
     unique_games = np.unique(game_ids)
     if len(unique_games) < 2:
@@ -435,10 +463,11 @@ def train_bc(args) -> None:
         print("Warm start loaded; initial policy preserved before updates", flush=True)
 
     def batch_loss(indexes, train: bool):
-        feat = move_tensor(torch, torch.from_numpy(x_feat[indexes]), device)
-        card = move_tensor(torch, torch.from_numpy(x_card[indexes]), device)
-        mask = move_tensor(torch, torch.from_numpy(x_mask[indexes]), device)
-        target = move_tensor(torch, torch.from_numpy(y[indexes]), device)
+        # Rollout npz 里是 float16/int16/uint8，统一在这里转成训练需要的 dtype。
+        feat = move_tensor(torch, torch.from_numpy(x_feat[indexes]).float(), device)
+        card = move_tensor(torch, torch.from_numpy(x_card[indexes]).long(), device)
+        mask = move_tensor(torch, torch.from_numpy(x_mask[indexes]).bool(), device)
+        target = move_tensor(torch, torch.from_numpy(y[indexes]).long(), device)
         logits = model(feat, card).masked_fill(~mask, -1e9)
         loss = F.cross_entropy(logits, target)
         pred = logits.argmax(dim=-1)
@@ -571,6 +600,9 @@ def parse_args():
     parser.add_argument("--max-games", type=int, default=5000)
     parser.add_argument("--epochs", type=int, default=8)
     parser.add_argument("--resume", help="checkpoint path, or auto for attached C2Net model")
+    parser.add_argument("--rollout-data", default=None,
+                        help="npz of self-play rollouts from tavern-arena/selfplay.py; "
+                             "replaces bot/guide dataset generation")
     parser.add_argument("--resume-sha256", help="required starting artifact SHA256")
     parser.add_argument("--action-identity", action="store_true",
                         help="enable zero-initialized action-aligned card identity head")
@@ -607,6 +639,25 @@ def parse_args():
     return args
 
 
+def _resolve_rollout_data(ctx, value: str) -> str:
+    """`--rollout-data auto` 时在挂载的数据集目录里找唯一的 rollouts_*.npz。"""
+    if value != "auto":
+        return value
+    roots = []
+    for attr in ("dataset_path", "input_path", "data_path", "dataset"):
+        path = getattr(ctx, attr, None)
+        if path:
+            roots.append(Path(path))
+    for root in roots:
+        matches = sorted(root.rglob("rollouts_*.npz"))
+        if len(matches) == 1:
+            print(f"rollout data resolved: {matches[0]}", flush=True)
+            return str(matches[0])
+        if len(matches) > 1:
+            raise ValueError(f"attached dataset has multiple rollouts_*.npz: {matches}")
+    raise ValueError("rollout-data=auto requires an attached dataset with one rollouts_*.npz")
+
+
 def main() -> None:
     # #region debug-point H1:H2-stack
     faulthandler.enable()
@@ -631,6 +682,8 @@ def main() -> None:
         if not destination.is_relative_to(output_root):
             raise ValueError("--output-dir must be within c2net output_path")
         args.output_dir = str(destination)
+        if args.rollout_data:
+            args.rollout_data = _resolve_rollout_data(ctx, args.rollout_data)
         upload = upload_output
         print(f"C2Net output directory: {args.output_dir}", flush=True)
     else:
