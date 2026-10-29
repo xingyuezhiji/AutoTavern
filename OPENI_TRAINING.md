@@ -44,6 +44,21 @@ The installer downloads Rust with Python (the BI-V100 image has no `curl`),
 uses the rsproxy mirror and Rust 1.98.1, then builds TavernGym with
 `--no-build-isolation` so maturin does not bootstrap another toolchain.
 
+## Verified OpenI Smoke Run
+
+[Task 917110](https://openi.pcl.ac.cn/cloudbrains/detail/917110) succeeded on
+2026-10-29 using code commit `0c45b03`, 2000 samples, 1 epoch, batch size 256
+and 2 evaluation games. Total task duration was 3 minutes 50 seconds.
+
+The CoreX 3.2 / Torch 2.1 image detected the BI-V100 but hung while moving the
+policy to CUDA. The isolated GPU check timed out after 45 seconds, so this
+verified run used **CPU**. GPU training is not yet verified on this image.
+
+Validation loss: 2.8379; validation accuracy: 0.1450.
+Evaluation placements: 8 and 7. This is a pipeline check, not a competitive model.
+The remote **结果下载** tab contains `tavern_bc_policy.pt` (10.93 MiB),
+confirming output persistence beyond the upload function returning.
+
 ## Local Use After Training
 
 Download `tavern_bc_policy.pt` from the CloudBrains output.
