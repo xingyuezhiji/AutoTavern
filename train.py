@@ -16,6 +16,7 @@ or written by this script.
 from __future__ import annotations
 
 import argparse
+import faulthandler
 import hashlib
 import json
 import os
@@ -423,6 +424,10 @@ def parse_args():
 
 
 def main() -> None:
+    # #region debug-point H1:H2-stack
+    faulthandler.enable()
+    faulthandler.dump_traceback_later(60, repeat=True)
+    # #endregion
     args = parse_args()
     upload = None
     if find_spec("c2net") is not None:
