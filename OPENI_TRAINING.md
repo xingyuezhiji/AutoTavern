@@ -19,6 +19,27 @@ cd AutoTavern
 python train.py --install --train --samples 2000 --epochs 1 --batch-size 256 --eval-games 2
 ```
 
+For expanded BC followed by outcome-reward PPO:
+
+```bash
+python train.py --install --train --samples 100000 --epochs 16 --batch-size 512 --eval-games 32 --rl-rounds 40 --rl-games 32 --ppo-epochs 4
+```
+
+BC validation uses separate complete game IDs. PPO plays 1280 fresh full games
+against seven scripted opponents with rotating seats, samples only legal actions,
+and trains with terminal reward `(4.5-placement)/3.5 + 0.5*(placement==1)`.
+There is no per-decision discount. PPO uses clipped likelihood ratios, an
+independent value baseline, entropy exploration, a small BC anchor and KL early
+stopping. CPU replicas batch rollout inference; actor/value updates use the
+verified GPU path. Dropout is disabled during PPO for consistent action ratios.
+
+`tavern_bc_only.pt` preserves the best BC checkpoint, `tavern_ppo_final.pt` saves
+the last PPO actor, and `tavern_bc_policy.pt` contains the best policy selected on
+fixed development games (which can remain BC if PPO does not improve it).
+`ppo_metrics.json` records rewards, placements, action counts and selection.
+These development games are separate from final local tests. Opponent strength
+and the small validation sample limit how much a better rank demonstrates.
+
 The script uses CUDA after an isolated policy-transfer / forward / backward / optimizer
 check passes. The check has a 180-second timeout: GPU detection alone is insufficient on
 CoreX, where a card can be visible while `model.to("cuda")` hangs. If the check fails

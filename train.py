@@ -213,6 +213,7 @@ def decode_obs(np, obs_bytes: tuple[bytes, bytes], mask_bytes: bytes):
 
 def generate_bot_dataset(np, taverngym, *, samples: int, seed: int, max_games: int):
     features, cards, masks, actions = [], [], [], []
+    game_ids = []
     game_count = 0
     started = time.time()
     print(f"generating bot dataset: samples={samples} seed={seed}", flush=True)
@@ -234,6 +235,7 @@ def generate_bot_dataset(np, taverngym, *, samples: int, seed: int, max_games: i
                 cards.append(c)
                 masks.append(m)
                 actions.append(action)
+                game_ids.append(game_count)
                 if len(actions) % 500 == 0:
                     print(f"dataset samples={len(actions)}/{samples} game={game_count} "
                           f"turn={game.turn} elapsed={time.time() - started:.1f}s", flush=True)
@@ -257,6 +259,7 @@ def generate_bot_dataset(np, taverngym, *, samples: int, seed: int, max_games: i
         np.stack(cards).astype("int64"),
         np.stack(masks).astype(bool),
         np.asarray(actions, dtype="int64"),
+        np.asarray(game_ids, dtype="int64"),
     )
 
 
@@ -366,13 +369,20 @@ def train_bc(args) -> None:
     if taverngym.OBS2_FLOATS != FEATURE_DIM or taverngym.OBS2_CARDS != CARD_DIM:
         raise RuntimeError(f"unexpected observe2 dims: {taverngym.OBS2_FLOATS}, {taverngym.OBS2_CARDS}")
 
-    x_feat, x_card, x_mask, y = generate_bot_dataset(
+    x_feat, x_card, x_mask, y, game_ids = generate_bot_dataset(
         np, taverngym, samples=args.samples, seed=args.seed, max_games=args.max_games
     )
     print(f"dataset ready: samples={len(y)}", flush=True)
-    split = int(len(y) * (1.0 - args.val_ratio))
-    train_idx = np.arange(split)
-    val_idx = np.arange(split, len(y))
+    unique_games = np.unique(game_ids)
+    if len(unique_games) < 2:
+        raise ValueError("need at least two games for independent validation")
+    np.random.shuffle(unique_games)
+    val_games = unique_games[:max(1, int(len(unique_games) * args.val_ratio))]
+    validation = np.isin(game_ids, val_games)
+    train_idx = np.flatnonzero(~validation)
+    val_idx = np.flatnonzero(validation)
+    print(f"split train={len(train_idx)} val={len(val_idx)} "
+          f"games={len(unique_games)} val_games={val_games.tolist()}", flush=True)
 
     cfg = ModelConfig(card_vocab=max(int(x_card.max()) + 1, args.card_vocab))
     TavernBCPolicy = build_model_class(nn, torch)
@@ -430,6 +440,11 @@ def train_bc(args) -> None:
             save_checkpoint(torch, model, cfg, best_path, args, val_loss, val_acc, taverngym)
             print(f"saved {best_path}", flush=True)
 
+    model.load_state_dict(torch.load(best_path, map_location="cpu")["state_dict"])
+    if args.rl_rounds:
+        from tavern_ppo import train_ppo
+        train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device,
+                  (x_feat, x_card, x_mask, y, train_idx))
     evaluate_policy(np, torch, taverngym, model, device, args.eval_games, args.seed + 100000)
     print(f"final checkpoint: {best_path}", flush=True)
 
@@ -505,8 +520,19 @@ def parse_args():
     parser.add_argument("--eval-games", type=int, default=16)
     parser.add_argument("--seed", type=int, default=20261029)
     parser.add_argument("--card-vocab", type=int, default=4096)
+    parser.add_argument("--rl-rounds", type=int, default=0)
+    parser.add_argument("--rl-games", type=int, default=32)
+    parser.add_argument("--ppo-epochs", type=int, default=4)
+    parser.add_argument("--rl-lr", type=float, default=3e-5)
+    parser.add_argument("--entropy-coef", type=float, default=0.01)
+    parser.add_argument("--bc-anchor", type=float, default=0.1)
     parser.add_argument("--output-dir", default=None)
-    return parser.parse_args()
+    args = parser.parse_args()
+    if (args.samples < 1 or args.epochs < 1 or args.batch_size < 1 or
+            args.eval_games < 1 or args.rl_rounds < 0 or args.rl_games < 2 or
+            args.ppo_epochs < 1 or not 0 < args.val_ratio < 1):
+        parser.error("invalid sample, epoch, batch, evaluation, RL or validation limits")
+    return args
 
 
 def main() -> None:
