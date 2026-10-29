@@ -28,3 +28,31 @@ Submitted task: https://openi.pcl.ac.cn/cloudbrains/detail/917175,
 code cac056fe3a, created 15:31:44 and started 15:32:06 on 2026-10-29.
 CPU smoke: 3000 decisions, 2 BC epochs, 2 PPO rounds of 4 games; finite losses,
 checkpoint runtime reload and ten complete independent games verified.
+
+User correction: no CPU training or automatic fallback. Task 917175 stalled
+at the first CUDA allocation and was stopped (confirmed STOPPED).
+Commit 12961eb makes a failed GPU probe raise before any dataset/training work;
+the failure branch was verified by mocking the probe (no training executed).
+New GPU-only task: https://openi.pcl.ac.cn/cloudbrains/detail/917183,
+created 15:45:05, RUNNING at 15:46 on 2026-10-29. Configuration remains
+100000/16/512/32 eval/40 RL rounds/32 RL games/4 PPO epochs.
+
+Latest verification at 15:51: task 917183 is STOPPED, ended 15:50:17
+after 4m51s. Simulator compilation succeeded; repeated child stack dumps
+show the first `torch.empty(1, device="cuda")` allocation never completed.
+No dataset or BC/PPO update ran, and no new policy is available.
+The platform stop reason/actor is not established. GPU-only constraint remains.
+Browser interactions with the alternative-image form failed to change state;
+no replacement job was submitted. Next step is restore reliable UI interaction
+and select/diagnose a working GPU resource before resubmitting full training.
+
+917202 reused the training template and also stalled at its first CUDA
+allocation before any dataset/training work. Selecting a recommendation image
+in the template form did not produce a different image in the task details.
+Do not treat it as a controlled alternate-image experiment.
+
+Next controlled experiment retains the user's training task template, BI-V100
+and all hyperparameters. Startup file `train_gpu_fresh.py` installs dependencies
+in a separate process, then execs a fresh `train.py --train` interpreter. This
+tests whether the install-stage Torch import/context affects the later probe.
+It is a training task, not an interactive/debug task, and rejects `--cpu`.
