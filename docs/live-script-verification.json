@@ -1,0 +1,24 @@
+{
+  "passed": [
+    "real-format entity/options parsing and checkpoint -> buy gesture",
+    "zero gold preserved",
+    "unknown card and missing physical position rejected",
+    "stale decision revision rejected before input",
+    "target entities and move insertion geometry",
+    "all 245 action IDs are distinct and range checked",
+    "partial lines and log truncation reset",
+    "replay CLI emits model decision without UI dependencies",
+    "native v2 observation, training vocabulary and 24 legal model steps"
+  ],
+  "checkpoint_sha256": "bd6b5d330e8242da167313694a7ecbfddfad3c3b5eb7805263bdd402e3a498cd",
+  "parameters": 2992951,
+  "architecture": "mlp",
+  "native": {
+    "decisions": 24,
+    "source_hash": "6d8712c93022ba11",
+    "catalog_sha256": "c4c42e6ce5060e1b79fbcd5f4edbf6d17495f0f52690072481d690610f7ef6d7"
+  },
+  "live_client_tested": false,
+  "log_context": "estimated",
+  "synthetic_fixture": true
+}

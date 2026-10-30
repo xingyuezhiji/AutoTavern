@@ -1,0 +1,8 @@
+{
+  "cards_file_sha256": "429305fb9dd53e6c5240bf5219a747602e96d7a0e4bbd19a0d65b8b044ed6168",
+  "training_catalog_sha256": "c4c42e6ce5060e1b79fbcd5f4edbf6d17495f0f52690072481d690610f7ef6d7",
+  "features": 4017,
+  "cards": 447,
+  "actions": 245,
+  "client_version": "36.6.3.253932"
+}

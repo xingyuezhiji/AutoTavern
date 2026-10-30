@@ -48,3 +48,8 @@ guard-*.json
 *.npz
 *.npy
 *.pkl
+
+# Local UI calibration and pilot environment
+.venv-live/
+live_tavern/config.local.json
+live_tavern/STOP

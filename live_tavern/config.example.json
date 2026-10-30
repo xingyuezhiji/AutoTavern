@@ -1,0 +1,16 @@
+{
+  "player_name": "YourBattleTag#1234",
+  "log_root": "C:\\Program Files (x86)\\Hearthstone\\Logs",
+  "window_title": "Hearthstone",
+  "calibrated": false,
+  "client_size": [1920, 1080],
+  "accepted_builds": [],
+  "points": {},
+  "rows": {
+    "board": {},
+    "board_gaps": {},
+    "shop": {},
+    "hand": {},
+    "choice": {}
+  }
+}
