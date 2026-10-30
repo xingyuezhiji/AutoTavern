@@ -12,7 +12,7 @@ import sys
 
 
 def gpu_preflight():
-    """Read driver state and verify uncached allocation before expensive setup."""
+    """Read driver state and verify allocation before expensive setup."""
     utilities = (("ix-smi", "ixsmi") if os.getenv("TAVERN_ACCELERATOR") == "iluvatar"
                  else ("ix-smi", "ixsmi", "nvidia-smi"))
     for executable in utilities:
@@ -51,7 +51,10 @@ print("GPU allocation passed",flush=True)
     child = subprocess.Popen([sys.executable, "-u", "-c", probe],
                              start_new_session=True)
     try:
-        result = child.wait(timeout=60)
+        # Allow CoreX cold context initialization to finish before declaring
+        # a driver hang. This is bounded and precedes dependency installation.
+        timeout = 180 if os.getenv("TAVERN_ACCELERATOR") == "iluvatar" else 60
+        result = child.wait(timeout=timeout)
     except subprocess.TimeoutExpired:
         # Do not synchronously wait again for an unresponsive driver process.
         child.kill()
