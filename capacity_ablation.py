@@ -4,8 +4,40 @@ import hashlib
 import json
 import time
 
-from train import ModelConfig, build_model_class, move_policy, save_checkpoint
+from train import ModelConfig, build_model_class, move_policy, move_tensor, save_checkpoint
 from league_rollout import evaluate, load_pool
+from train import decode_obs
+
+
+def gpu_preflight(np, torch, nn, tg, device):
+    """Verify both disposable architectures update on the real accelerator."""
+    if str(device) != "cuda":
+        raise ValueError("entity preflight requires GPU")
+    game = tg.Game(12345)
+    f, c, mask = decode_obs(np, game.observe2(0), game.legal_mask(0))
+    features = move_tensor(torch, torch.from_numpy(np.stack([f, f])), device)
+    cards = move_tensor(torch, torch.from_numpy(np.stack([c, c]).astype("int64")), device)
+    masks = move_tensor(torch, torch.from_numpy(np.stack([mask, mask])), device)
+    for name, d, layers, heads in (("small", 168, 4, 6), ("18m", 384, 8, 8)):
+        cfg = ModelConfig(architecture="entity_transformer", dropout=0,
+                          transformer_dim=d, transformer_layers=layers,
+                          transformer_heads=heads)
+        model = move_policy(torch, build_model_class(nn, torch)(cfg), device).eval()
+        before = model.entity.head[-1].weight.detach().clone()
+        logits = model(features, cards).masked_fill(~masks, -1e9)
+        loss = torch.nn.functional.cross_entropy(logits, masks.long().argmax(-1))
+        assert torch.isfinite(loss)
+        optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)
+        optimizer.zero_grad(set_to_none=True)
+        loss.backward()
+        nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        optimizer.step()
+        torch.cuda.synchronize()
+        assert (before - model.entity.head[-1].weight).abs().max().item() > 0
+        print(f"CAPACITY GPU preflight model={name} backward/update verified "
+              f"device={torch.cuda.get_device_name(0)}", flush=True)
+        del model, optimizer, before
+        torch.cuda.empty_cache()
 
 
 def run(args, np, torch, nn, F, tg, teacher, data, device):
@@ -19,9 +51,9 @@ def run(args, np, torch, nn, F, tg, teacher, data, device):
     with torch.no_grad():
         for start in range(0, len(y), 256):
             end = min(len(y), start + 256)
-            f = torch.from_numpy(xf[start:end].astype("float32")).to(device)
-            c = torch.from_numpy(xc[start:end].astype("int64")).to(device)
-            m = torch.from_numpy(xm[start:end].astype("bool")).to(device)
+            f = move_tensor(torch, torch.from_numpy(xf[start:end].astype("float32")), device)
+            c = move_tensor(torch, torch.from_numpy(xc[start:end].astype("int64")), device)
+            m = move_tensor(torch, torch.from_numpy(xm[start:end].astype("bool")), device)
             targets[start:end] = teacher(f, c).masked_fill(~m, -1e9).softmax(-1).cpu().numpy()
     report = {"experiment": "matched distillation initialization, not full PPO scaling",
               "teacher_sha256": hashlib.sha256((output / "tavern_bc_policy.pt").read_bytes()).hexdigest(),
@@ -47,11 +79,11 @@ def run(args, np, torch, nn, F, tg, teacher, data, device):
         history = []
         started = time.time()
         def loss_for(index):
-            f = torch.from_numpy(xf[index].astype("float32")).to(device)
-            c = torch.from_numpy(xc[index].astype("int64")).to(device)
-            m = torch.from_numpy(xm[index].astype("bool")).to(device)
-            label = torch.from_numpy(y[index].astype("int64")).to(device)
-            target = torch.from_numpy(targets[index]).to(device)
+            f = move_tensor(torch, torch.from_numpy(xf[index].astype("float32")), device)
+            c = move_tensor(torch, torch.from_numpy(xc[index].astype("int64")), device)
+            m = move_tensor(torch, torch.from_numpy(xm[index].astype("bool")), device)
+            label = move_tensor(torch, torch.from_numpy(y[index].astype("int64")), device)
+            target = move_tensor(torch, torch.from_numpy(targets[index]), device)
             logits = model(f, c).masked_fill(~m, -1e9)
             kd = F.kl_div(F.log_softmax(logits, -1), target, reduction="batchmean")
             return 0.8 * kd + 0.2 * F.cross_entropy(logits, label)

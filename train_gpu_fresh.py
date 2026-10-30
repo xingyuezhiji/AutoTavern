@@ -13,7 +13,9 @@ import sys
 
 def gpu_preflight():
     """Read driver state and verify uncached allocation before expensive setup."""
-    for executable in ("ix-smi", "nvidia-smi"):
+    utilities = (("ix-smi", "ixsmi") if os.getenv("TAVERN_ACCELERATOR") == "iluvatar"
+                 else ("ix-smi", "ixsmi", "nvidia-smi"))
+    for executable in utilities:
         command = shutil.which(executable)
         if command:
             subprocess.run([command], timeout=15, check=False)

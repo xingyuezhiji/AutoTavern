@@ -61,3 +61,10 @@ distillation data and game-level validation, 8 epochs, teacher-KL plus guide
 labels, and three matched final opponent holdouts. Do not claim paper parity:
 pretrained rule-text embeddings and reality-calibrated boards are absent.
 Save students separately, without promotion over the mature MLP.
+
+User hardware correction: use ILUVATAR-GPGPU BI-V100 only. Task 918038 on
+A100 is STOPPED. Live platform specification 266: one 32 GiB BI-V100, 30 CPU
+cores, 64 GiB RAM, 1 point/hour; CoreX 3.2.0/PyTorch 2.1/Python 3.10 image.
+Preserve training/data/budget. Require CoreX utility and actual small/large
+GPU backward-update preflight; use staged CPU-to-device transfers and math
+attention. Never fallback to CPU updates or NVIDIA hardware.

@@ -3,7 +3,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from train import ARENA_CATALOG_SHA256, ARENA_RULESET_ID, ModelConfig, build_model_class, decode_obs
+from train import ARENA_CATALOG_SHA256, ARENA_RULESET_ID, ModelConfig, build_model_class, decode_obs, move_tensor
 
 
 def load_pool(np, torch, nn, tg, manifest_path):
@@ -120,12 +120,13 @@ def collect(np, torch, tg, actor, critic, games, seed, *, stochastic,
         if not mask.any(dim=1).all():
             raise RuntimeError("learner empty legal mask")
         with torch.no_grad():
-            logits = actor(feat.to(actor_device), card.to(actor_device)).masked_fill(
-                ~mask.to(actor_device), -1e9)
+            logits = actor(move_tensor(torch, feat, actor_device),
+                           move_tensor(torch, card, actor_device)).masked_fill(
+                ~move_tensor(torch, mask, actor_device), -1e9)
             dist = torch.distributions.Categorical(logits=logits)
             action = dist.sample() if stochastic else logits.argmax(-1)
             logp = dist.log_prob(action)
-            values = critic(feat.to(critic_device)).squeeze(-1) if critic is not None else torch.zeros(len(pending))
+            values = critic(move_tensor(torch, feat, critic_device)).squeeze(-1) if critic is not None else torch.zeros(len(pending))
         for j, i in enumerate(pending):
             a = int(action[j])
             if not observations[j][2][a]:

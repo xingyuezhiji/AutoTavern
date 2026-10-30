@@ -350,7 +350,8 @@ print("CUDA probe passed", flush=True)
 def move_tensor(torch, tensor, device, *, chunk_bytes: int = 8 * 1024 * 1024):
     """Use the staged dense transfer verified by OpenI task 898380 on CoreX."""
     target = torch.device(device)
-    corex = "corex" in str(Path(torch.__file__).resolve()).lower()
+    corex = (os.getenv("TAVERN_ACCELERATOR") == "iluvatar" or
+             "corex" in str(Path(torch.__file__).resolve()).lower())
     if not (corex and tensor.device.type == "cpu" and target.type == "cuda"):
         return tensor.to(target)
     if tensor.layout != torch.strided or tensor.is_quantized:
@@ -369,7 +370,8 @@ def move_tensor(torch, tensor, device, *, chunk_bytes: int = 8 * 1024 * 1024):
 
 
 def move_policy(torch, model, device):
-    corex = "corex" in str(Path(torch.__file__).resolve()).lower()
+    corex = (os.getenv("TAVERN_ACCELERATOR") == "iluvatar" or
+             "corex" in str(Path(torch.__file__).resolve()).lower())
     staged = corex and torch.device(device).type == "cuda"
     print(f"model transfer={'staged_copy' if staged else 'native'} device={device}", flush=True)
     # _apply preserves Parameters, gradients, buffers and child modules.
@@ -419,6 +421,18 @@ def train_bc(args) -> None:
     if device.type == "cuda":
         print(f"gpu={torch.cuda.get_device_name(0)}", flush=True)
     print(f"taverngym build={taverngym.build_info()}", flush=True)
+    if os.getenv("TAVERN_ACCELERATOR") == "iluvatar":
+        # CoreX supports the math attention path; avoid NVIDIA-only fused paths.
+        if hasattr(torch.backends.cuda, "enable_flash_sdp"):
+            torch.backends.cuda.enable_flash_sdp(False)
+            torch.backends.cuda.enable_mem_efficient_sdp(False)
+            torch.backends.cuda.enable_math_sdp(True)
+        if hasattr(torch.backends, "mha") and hasattr(torch.backends.mha, "set_fastpath_enabled"):
+            torch.backends.mha.set_fastpath_enabled(False)
+        print("CoreX math attention enabled; device updates remain on GPU", flush=True)
+    if args.capacity_ablation:
+        from capacity_ablation import gpu_preflight
+        gpu_preflight(np, torch, nn, taverngym, device)
     if taverngym.OBS2_FLOATS != FEATURE_DIM or taverngym.OBS2_CARDS != CARD_DIM:
         raise RuntimeError(f"unexpected observe2 dims: {taverngym.OBS2_FLOATS}, {taverngym.OBS2_CARDS}")
 
