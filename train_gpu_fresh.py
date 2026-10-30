@@ -19,8 +19,13 @@ def gpu_preflight():
         command = shutil.which(executable)
         if command:
             subprocess.run([command], timeout=15, check=False)
-    # Cache bypass is a controlled GPU allocator experiment, not CPU fallback.
-    os.environ["PYTORCH_NO_CUDA_MEMORY_CACHING"] = "1"
+    # CoreX's native allocator was used by the verified prior BI-V100 run.
+    # Its uncached allocation timed out in task 918043; keep NVIDIA's existing
+    # workaround scoped to that backend instead of imposing it on CoreX.
+    if os.getenv("TAVERN_ACCELERATOR") == "iluvatar":
+        os.environ.pop("PYTORCH_NO_CUDA_MEMORY_CACHING", None)
+    else:
+        os.environ["PYTORCH_NO_CUDA_MEMORY_CACHING"] = "1"
     os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "max_split_size_mb:128")
     probe = """
 import faulthandler, json, os, socket, torch
@@ -33,12 +38,15 @@ print(json.dumps({"event":"gpu_preflight","host":socket.gethostname(),
 if not torch.cuda.is_available():
     raise RuntimeError("GPU unavailable; CPU training prohibited")
 torch.cuda.set_device(0)
-print("GPU uncached allocation: "+torch.cuda.get_device_name(0),flush=True)
+print("GPU allocation device: "+torch.cuda.get_device_name(0),flush=True)
+print("GPU allocation: empty tensor",flush=True)
 x=torch.empty(1,device="cuda")
+print("GPU allocation: fill tensor",flush=True)
 x.fill_(1)
+print("GPU allocation: synchronize",flush=True)
 torch.cuda.synchronize()
 assert x.item()==1
-print("GPU uncached allocation passed",flush=True)
+print("GPU allocation passed",flush=True)
 """
     child = subprocess.Popen([sys.executable, "-u", "-c", probe],
                              start_new_session=True)
@@ -47,7 +55,7 @@ print("GPU uncached allocation passed",flush=True)
     except subprocess.TimeoutExpired:
         # Do not synchronously wait again for an unresponsive driver process.
         child.kill()
-        raise RuntimeError("Uncached GPU allocation timed out; no training started")
+        raise RuntimeError("GPU allocation timed out; no training started")
     if result:
         raise RuntimeError(f"GPU preflight failed ({result}); no CPU fallback")
 
