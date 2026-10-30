@@ -1,3 +1,15 @@
+# Windows 桌面 V2 安装包
+
+[下载含模型权重的 Windows ZIP](https://github.com/xingyuezhiji/AutoTavern/blob/releases/desktop-v2-windows/AutoTavern-DesktopV2-Windows-20261030.zip?raw=true)
+
+解压后双击 `desktop_tavern/setup-windows.cmd`。需要 64 位 Python 3.10+；使用方法见 [桌面 V2 说明](docs/DESKTOP_V2.md)。包内已包含 917730 模型，默认只输出建议。
+
+源码基于 `52c53a9`。两项合成场景回放及 18 项离线检查已通过，真实游戏客户端尚未实测。
+
+ZIP SHA-256：`4a9f7eb5747bf6c5d942f78d5a86b28e8ec30300636046ba4640bf6d59fb69d6`。
+
+---
+
 <a name="top"></a>
 
 <p align="center">
