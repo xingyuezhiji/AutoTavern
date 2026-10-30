@@ -85,16 +85,45 @@ def train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device, bc):
                                  lr=args.rl_lr)
     history = []
     selection_seed = args.seed + 200000
+    league = bool(args.league_pool)
+    opponents, provenance = (), []
+    if league:
+        from league_rollout import load_pool, evaluate as league_eval, collect as league_collect
+        opponents, provenance = load_pool(np, torch, nn, taverngym, args.league_pool)
+    stage_anchor = None
+    if league and args.stage_kl:
+        stage_anchor = move_policy(torch, build_model_class(nn, torch)(cfg), device)
+        stage_anchor.load_state_dict(model.state_dict(), strict=True)
+        stage_anchor.eval()
+        for parameter in stage_anchor.parameters():
+            parameter.requires_grad_(False)
+    assessment = {}
+    bot_baseline = None
     def sync():
         actor.load_state_dict({k: v.detach().cpu() for k, v in model.state_dict().items()})
         cpu_critic.load_state_dict({k: v.detach().cpu() for k, v in value_model.state_dict().items()})
     def assess():
         sync()
+        if league:
+            assessment["mixed"] = league_eval(np, torch, taverngym, actor, args.eval_games,
+                                             selection_seed, opponents=opponents, mode="mixed")
+            assessment["bot"] = league_eval(np, torch, taverngym, actor, args.eval_games,
+                                           selection_seed, mode="bot")
+            return assessment["mixed"]["placements"]
         _, places = collect(np, torch, taverngym, actor, cpu_critic,
                             args.eval_games, selection_seed, stochastic=False)
         return places
     baseline = assess()
-    best_key, best_mean, best_top4 = selection_stats(np, baseline, args)
+    if league:
+        bot_baseline = dict(assessment["bot"])
+    def selection(places):
+        key, mean, top4 = selection_stats(np, places, args)
+        if league:
+            guard = (assessment["bot"]["avg_place"] <= bot_baseline["avg_place"] + 0.4
+                     and assessment["bot"]["top4"] >= bot_baseline["top4"] - 0.125)
+            key = (guard, -mean, top4)
+        return key, mean, top4
+    best_key, best_mean, best_top4 = selection(baseline)
     metadata = {"reward": "(4.5-placement)/3.5 + 0.5*(placement==1) + top4_bonus*(placement<=4)",
                 "top4_bonus": args.top4_bonus,
                 "initialization": "resumed_policy" if args.resume else "behavior_cloning",
@@ -102,12 +131,16 @@ def train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device, bc):
                 "selection_games": args.eval_games,
                 "target_top4": args.target_top4, "target_avg_place": args.target_avg_place,
                 "best_round": 0, "rounds": history}
+    metadata.update({"league": league, "pool": provenance, "update_device": str(device),
+                     "baseline_assessment": dict(assessment),
+                     "gae_lambda": args.gae_lambda if league else None,
+                     "stage_kl": args.stage_kl if league else 0})
     bc_payload = torch.load(output / "tavern_bc_policy.pt", map_location="cpu")
     torch.save(bc_payload, output / "tavern_bc_only.pt")
     # The warm-start policy is also eligible on the development set, so
     # supervised imitation cannot silently replace a stronger original.
     initial_path = output / "tavern_initial.pt"
-    if initial_path.exists():
+    if initial_path.exists() and not league:
         initial_payload = torch.load(initial_path, map_location="cpu", weights_only=True)
         actor.load_state_dict(initial_payload["state_dict"], strict=True)
         _, initial_places = collect(np, torch, taverngym, actor, cpu_critic,
@@ -128,13 +161,32 @@ def train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device, bc):
     y = y.astype("int64")
     for iteration in range(1, args.rl_rounds + 1):
         sync()
-        rows, places = collect(np, torch, taverngym, actor, cpu_critic, args.rl_games,
-                              args.seed + 1000000 + iteration * args.rl_games,
-                              stochastic=True)
+        rollout_audit = None
+        if league:
+            rows, places, rollout_audit = league_collect(
+                np, torch, taverngym, actor, cpu_critic, args.rl_games,
+                args.seed + 1000000 + iteration * args.rl_games, stochastic=True,
+                opponents=opponents, mode=args.league_mode)
+        else:
+            rows, places = collect(np, torch, taverngym, actor, cpu_critic, args.rl_games,
+                                  args.seed + 1000000 + iteration * args.rl_games,
+                                  stochastic=True)
         flat, returns = [], []
         for episode, place in zip(rows, places):
             flat.extend(episode)
-            returns.extend([placement_reward(place, args.top4_bonus)] * len(episode))
+            reward = placement_reward(place, args.top4_bonus)
+            if league:
+                targets = [0.0] * len(episode)
+                gae, next_value = 0.0, 0.0
+                for t in range(len(episode) - 1, -1, -1):
+                    value = episode[t][5]
+                    delta = (reward if t == len(episode) - 1 else 0.0) + next_value - value
+                    gae = delta + args.gae_lambda * gae
+                    targets[t] = gae + value
+                    next_value = value
+                returns.extend(targets)
+            else:
+                returns.extend([reward] * len(episode))
         if not flat:
             raise RuntimeError("no PPO decisions")
         feat = np.stack([r[0] for r in flat])
@@ -151,6 +203,7 @@ def train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device, bc):
         model.eval()  # Dropout would invalidate the stored likelihood ratios.
         value_model.eval()
         losses, kls = [], []
+        optimizer_steps = 0
         stopped = False
         for _ in range(args.ppo_epochs):
             order = np.random.permutation(len(flat))
@@ -172,6 +225,12 @@ def train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device, bc):
                                               tensor(y[anchors]))
                 loss = policy_loss + 0.5 * value_loss - args.entropy_coef * (dist.entropy() * w).mean()
                 loss = loss + args.bc_anchor * anchor_loss
+                if stage_anchor is not None and iteration <= args.stage_kl_rounds:
+                    with torch.no_grad():
+                        anchor_dist = torch.distributions.Categorical(
+                            logits=stage_anchor(f, c).masked_fill(~m, -1e9))
+                    loss = loss + args.stage_kl * (
+                        torch.distributions.kl_divergence(anchor_dist, dist) * w).mean()
                 if not torch.isfinite(loss):
                     raise RuntimeError("non-finite PPO loss")
                 kl = float(((ratio - 1) - delta).mean().detach().cpu())
@@ -183,6 +242,7 @@ def train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device, bc):
                 nn.utils.clip_grad_norm_(list(model.parameters()) + list(value_model.parameters()),
                                          args.grad_clip)
                 optimizer.step()
+                optimizer_steps += 1
                 losses.append(float(loss.detach().cpu()))
                 kls.append(kl)
             if stopped:
@@ -194,13 +254,18 @@ def train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device, bc):
                   "first": float(np.mean(np.asarray(places) == 1)),
                   "loss": float(np.mean(losses)) if losses else None,
                   "kl": float(np.mean(kls)) if kls else None,
-                  "actions": dict(Counter(map(int, actions))), "kl_stopped": stopped}
+                  "actions": dict(Counter(map(int, actions))), "kl_stopped": stopped,
+                  "optimizer_steps": optimizer_steps}
+        if league:
+            record["rollout_audit"] = rollout_audit
         # A fixed development set selects the checkpoint; external fixed games
         # remain untouched for the final independent comparison.
         if iteration % args.selection_interval == 0 or iteration == args.rl_rounds:
             selected = assess()
             record["selection_placements"] = selected
-            key, mean, top4 = selection_stats(np, selected, args)
+            key, mean, top4 = selection(selected)
+            if league:
+                record["assessment"] = dict(assessment)
             record["selection_avg_place"] = mean
             record["selection_top4"] = top4
             if key > best_key:

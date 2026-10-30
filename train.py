@@ -171,6 +171,10 @@ class ModelConfig:
     hidden: int = 512
     dropout: float = 0.05
     action_identity: bool = False
+    architecture: str = "mlp"
+    transformer_dim: int = 384
+    transformer_layers: int = 8
+    transformer_heads: int = 8
 
 
 def build_model_class(nn, torch):
@@ -178,6 +182,12 @@ def build_model_class(nn, torch):
         def __init__(self, cfg: ModelConfig):
             super().__init__()
             self.cfg = cfg
+            if cfg.architecture == "entity_transformer":
+                from entity_policy import build_entity_policy
+                self.entity = build_entity_policy(nn, torch, cfg)
+                return
+            if cfg.architecture != "mlp":
+                raise ValueError("unsupported policy architecture")
             self.card_emb = nn.Embedding(cfg.card_vocab, cfg.card_emb, padding_idx=0)
             self.feature_net = nn.Sequential(
                 nn.LayerNorm(cfg.feature_dim),
@@ -198,6 +208,8 @@ def build_model_class(nn, torch):
                 self.identity_head = build_identity_head(nn, torch, cfg)
 
         def forward(self, features, cards):
+            if self.cfg.architecture == "entity_transformer":
+                return self.entity(features, cards)
             cards = cards.clamp(min=0, max=self.cfg.card_vocab - 1)
             emb = self.card_emb(cards)
             present = (cards != 0).float().unsqueeze(-1)
@@ -536,6 +548,24 @@ def train_bc(args) -> None:
             args.final_eval_games, args.final_eval_seed)
     (output_dir / "independent_evaluation.json").write_text(
         json.dumps(reports, indent=2), encoding="utf-8")
+    if args.league_pool:
+        from league_rollout import evaluate, load_pool
+        opponents, provenance = load_pool(np, torch, nn, taverngym, args.league_pool)
+        league_reports = {"pool": provenance, "selected": {}, "initial": {}}
+        for mode in ("bot", "mixed", "hard"):
+            count = args.final_eval_games if mode == "bot" else args.league_final_games
+            league_reports["selected"][mode] = evaluate(
+                np, torch, taverngym, model, count, args.final_eval_seed,
+                opponents=opponents, mode=mode)
+            if resume_payload:
+                league_reports["initial"][mode] = evaluate(
+                    np, torch, taverngym, initial, count, args.final_eval_seed,
+                    opponents=opponents, mode=mode)
+        (output_dir / "league_evaluation.json").write_text(json.dumps(league_reports, indent=2))
+    if args.capacity_ablation:
+        from capacity_ablation import run
+        run(args, np, torch, nn, F, taverngym, model,
+            (x_feat, x_card, x_mask, y, train_idx, val_idx), device)
     print(f"final checkpoint: {best_path}", flush=True)
 
 
@@ -640,6 +670,16 @@ def parse_args():
     parser.add_argument("--target-top4", type=float, default=0.7)
     parser.add_argument("--target-avg-place", type=float, default=3.5)
     parser.add_argument("--output-dir", default=None)
+    parser.add_argument("--league-pool", help="frozen pool manifest path, or auto in C2Net")
+    parser.add_argument("--league-mode", choices=("bot", "mixed", "hard", "curriculum"),
+                        default="curriculum")
+    parser.add_argument("--league-final-games", type=int, default=128)
+    parser.add_argument("--stage-kl", type=float, default=0.1)
+    parser.add_argument("--stage-kl-rounds", type=int, default=40)
+    parser.add_argument("--gae-lambda", type=float, default=0.995)
+    parser.add_argument("--capacity-ablation", action="store_true")
+    parser.add_argument("--capacity-epochs", type=int, default=8)
+    parser.add_argument("--capacity-eval-games", type=int, default=64)
     args = parser.parse_args()
     if (args.samples < 1 or args.epochs < 0 or
             (args.epochs == 0 and not args.resume) or args.batch_size < 1 or
@@ -647,7 +687,11 @@ def parse_args():
             args.rl_rounds < 0 or args.rl_games < 2 or
             args.ppo_epochs < 1 or args.selection_interval < 1 or
             args.top4_bonus < 0 or not 0 <= args.target_top4 <= 1 or
-            not 1 <= args.target_avg_place <= 8 or not 0 < args.val_ratio < 1):
+            not 1 <= args.target_avg_place <= 8 or not 0 < args.val_ratio < 1 or
+            args.league_final_games < 1 or not 0 <= args.gae_lambda <= 1 or
+            args.stage_kl < 0 or args.stage_kl_rounds < 0 or
+            args.capacity_epochs < 1 or args.capacity_eval_games < 1 or
+            (args.capacity_ablation and not args.league_pool)):
         parser.error("invalid sample, epoch, batch, evaluation, RL or validation limits")
     return args
 
@@ -728,6 +772,12 @@ def main() -> None:
             if len(matches) != 1:
                 raise ValueError("attached model must contain exactly one tavern_bc_policy.pt")
             args.resume = str(matches[0])
+        if args.league_pool == "auto":
+            model_root = getattr(ctx, "pretrain_model_path", None)
+            matches = list(Path(model_root).rglob("opponent_pool.json")) if model_root else []
+            if len(matches) != 1:
+                raise ValueError("league-pool=auto requires exactly one attached opponent_pool.json")
+            args.league_pool = str(matches[0])
         output_root = Path(ctx.output_path).resolve()
         destination = Path(args.output_dir).resolve() if args.output_dir else output_root
         if not destination.is_relative_to(output_root):
