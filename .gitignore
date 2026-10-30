@@ -54,3 +54,8 @@ guard-*.json
 live_tavern/config.local.json
 live_tavern/config.mac.local.json
 live_tavern/STOP
+.venv-desktop/
+desktop_tavern/*.local.json
+desktop_tavern/STOP
+desktop_tavern/session.lock
+desktop_tavern/templates/

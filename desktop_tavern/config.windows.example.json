@@ -1,0 +1,18 @@
+{
+  "player_name": "YourBattleTag#1234",
+  "log_root": "C:\\Program Files (x86)\\Hearthstone\\Logs",
+  "window_title": "Hearthstone",
+  "coordinate_space": "windows_client_pixels",
+  "calibrated": false,
+  "client_size": [1920, 1080],
+  "accepted_builds": [],
+  "auto_queue": false,
+  "auto_settle": false,
+  "max_games": 1,
+  "max_actions_per_turn": 60,
+  "action_timeout": 15,
+  "hero_stats": null,
+  "points": {},
+  "rows": {"heroes": {}, "board": {}, "board_gaps": {}, "shop": {}, "hand": {}, "choice": {}},
+  "scenes": {}
+}

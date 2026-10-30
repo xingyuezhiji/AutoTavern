@@ -1,0 +1,38 @@
+{
+  "status": "passed",
+  "checks": [
+    "MULLIGAN before TURN/gold, physical UI ordering and locked hero filtering",
+    "unknown ownership and incomplete hero slots rejected",
+    "skin parent DBF statistics and invalid statistic rejection",
+    "hero select -> confirm -> SendChoices, no repeated hero clicks",
+    "hero acknowledgement timeout stops without retry",
+    "917730 checkpoint -> legal buy; tag-only changes cannot acknowledge a gesture",
+    "recruit/combat/result lifecycle and one-game cap",
+    "queue needs explicit enable/evidence; duplicate queue guarded",
+    "result dismissal acknowledged by lobby, stops at configured game cap",
+    "fresh unique screenshot template, stale/ambiguous/changed/uniform/size rejection",
+    "OS session lock contention and release",
+    "Windows client rectangle/negative monitor gesture and pre-click state invalidation",
+    "persistent STOP rejects input",
+    "Mac Quartz logical coordinates, F8 drag release and choice-only hero input (mocked)",
+    "screenshot coordinate normalization",
+    "hero execution needs screenshot panel confirmation",
+    "per-turn action cap and strict automation switch validation",
+    "standalone desktop V2 CLI synthetic hero+recruit replay and session snapshots"
+  ],
+  "parameters": 2992951,
+  "model_sha256": "bd6b5d330e8242da167313694a7ecbfddfad3c3b5eb7805263bdd402e3a498cd",
+  "catalog_sha256": "429305fb9dd53e6c5240bf5219a747602e96d7a0e4bbd19a0d65b8b044ed6168",
+  "platforms": {
+    "mac": "mocked Quartz input; native diagnostics separate",
+    "windows": "mocked Win32 rectangle and mouse"
+  },
+  "live_client_tested": false,
+  "real_matches_started": 0,
+  "limitations": [
+    "Power.log leaves model counters/opponent context unobserved",
+    "actual Mac and Windows game clients not tested",
+    "Intel Mac dependencies not validated",
+    "hero/general target-sensitive workflows require calibration"
+  ]
+}

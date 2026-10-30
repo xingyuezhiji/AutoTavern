@@ -46,6 +46,11 @@ training code, and the benchmark item generators are not included.
 
 ## Quick start
 
+For the experimental trained-model desktop assistant, see
+[Desktop V2 for Mac and Windows](docs/DESKTOP_V2.md). It includes hero selection,
+acknowledged actions and calibrated lobby/queue/result handling. Real game-client
+acceptance is still pending; the default mode only recommends actions.
+
 ```bash
 git clone https://github.com/MCG-NJU/AutoTavern.git
 cd AutoTavern

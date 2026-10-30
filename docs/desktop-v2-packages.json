@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "bundles": [
+    {
+      "platform": "mac",
+      "archive": "/Users/bytedance/project/codeai/exports/AutoTavern-DesktopV2-Mac-20261030.zip",
+      "sha256": "a46a120f9024f710e61788d6c67d6b0f1ac7b7b17bda299eaedcc8ddb921dcfa",
+      "extracted_replay_decisions": 2,
+      "acceptance_checks": 18,
+      "model_sha256": "bd6b5d330e8242da167313694a7ecbfddfad3c3b5eb7805263bdd402e3a498cd",
+      "launchers_checked": "syntax/permissions/line-endings only",
+      "source_checkout_imports": false,
+      "live_client_tested": false
+    },
+    {
+      "platform": "windows",
+      "archive": "/Users/bytedance/project/codeai/exports/AutoTavern-DesktopV2-Windows-20261030.zip",
+      "sha256": "4a9f7eb5747bf6c5d942f78d5a86b28e8ec30300636046ba4640bf6d59fb69d6",
+      "extracted_replay_decisions": 2,
+      "acceptance_checks": 18,
+      "model_sha256": "bd6b5d330e8242da167313694a7ecbfddfad3c3b5eb7805263bdd402e3a498cd",
+      "launchers_checked": "syntax/permissions/line-endings only",
+      "source_checkout_imports": false,
+      "live_client_tested": false
+    }
+  ]
+}
