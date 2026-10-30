@@ -136,7 +136,14 @@ def install_environment() -> None:
     run([sys.executable, "-m", "pip", "install", "maturin>=1.15,<2"])
     # Preserve the image's NumPy 1.x: its CoreX TensorFlow requires <1.24
     # and CuPy requires <1.26. Torch 2.1 also needs the NumPy 1.x ABI.
-    if find_spec("numpy") is None or int(version("numpy").split(".")[0]) >= 2:
+    if os.getenv("TAVERN_ACCELERATOR") == "metax":
+        # MACA PyTorch 2.8 images use Python 3.12, which cannot install NumPy
+        # 1.23. Preserve their supported ABI and other bundled dependencies.
+        if find_spec("numpy") is None:
+            run([sys.executable, "-m", "pip", "install", "numpy>=1.26,<3"])
+        else:
+            print(f"keeping MACA numpy={version('numpy')}", flush=True)
+    elif find_spec("numpy") is None or int(version("numpy").split(".")[0]) >= 2:
         run([sys.executable, "-m", "pip", "install", "numpy>=1.23,<1.24"])
     else:
         print(f"keeping existing numpy={version('numpy')}", flush=True)
@@ -421,7 +428,7 @@ def train_bc(args) -> None:
     if device.type == "cuda":
         print(f"gpu={torch.cuda.get_device_name(0)}", flush=True)
     print(f"taverngym build={taverngym.build_info()}", flush=True)
-    if os.getenv("TAVERN_ACCELERATOR") == "iluvatar":
+    if os.getenv("TAVERN_ACCELERATOR") in {"iluvatar", "metax"}:
         # CoreX supports the math attention path; avoid NVIDIA-only fused paths.
         if hasattr(torch.backends.cuda, "enable_flash_sdp"):
             torch.backends.cuda.enable_flash_sdp(False)
@@ -429,7 +436,8 @@ def train_bc(args) -> None:
             torch.backends.cuda.enable_math_sdp(True)
         if hasattr(torch.backends, "mha") and hasattr(torch.backends.mha, "set_fastpath_enabled"):
             torch.backends.mha.set_fastpath_enabled(False)
-        print("CoreX math attention enabled; device updates remain on GPU", flush=True)
+        runtime_name = "CoreX" if os.getenv("TAVERN_ACCELERATOR") == "iluvatar" else "MACA"
+        print(f"{runtime_name} math attention enabled; device updates remain on GPU", flush=True)
     if args.capacity_ablation:
         from capacity_ablation import gpu_preflight
         gpu_preflight(np, torch, nn, taverngym, device)

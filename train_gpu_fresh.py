@@ -13,8 +13,9 @@ import sys
 
 def gpu_preflight():
     """Read driver state and verify allocation before expensive setup."""
-    utilities = (("ix-smi", "ixsmi") if os.getenv("TAVERN_ACCELERATOR") == "iluvatar"
-                 else ("ix-smi", "ixsmi", "nvidia-smi"))
+    accelerator = os.getenv("TAVERN_ACCELERATOR")
+    utilities = {"iluvatar": ("ix-smi", "ixsmi"), "metax": ("mx-smi",)}.get(
+        accelerator, ("ix-smi", "ixsmi", "nvidia-smi"))
     for executable in utilities:
         command = shutil.which(executable)
         if command:
@@ -22,7 +23,7 @@ def gpu_preflight():
     # CoreX's native allocator was used by the verified prior BI-V100 run.
     # Its uncached allocation timed out in task 918043; keep NVIDIA's existing
     # workaround scoped to that backend instead of imposing it on CoreX.
-    if os.getenv("TAVERN_ACCELERATOR") == "iluvatar":
+    if accelerator in {"iluvatar", "metax"}:
         os.environ.pop("PYTORCH_NO_CUDA_MEMORY_CACHING", None)
     else:
         os.environ["PYTORCH_NO_CUDA_MEMORY_CACHING"] = "1"
@@ -39,6 +40,9 @@ if not torch.cuda.is_available():
     raise RuntimeError("GPU unavailable; CPU training prohibited")
 torch.cuda.set_device(0)
 print("GPU allocation device: "+torch.cuda.get_device_name(0),flush=True)
+expected = {"metax": "metax", "iluvatar": "iluvatar"}.get(os.getenv("TAVERN_ACCELERATOR"))
+if expected and expected not in torch.cuda.get_device_name(0).lower():
+    raise RuntimeError("Allocated GPU does not match requested vendor")
 print("GPU allocation: empty tensor",flush=True)
 x=torch.empty(1,device="cuda")
 print("GPU allocation: fill tensor",flush=True)
@@ -53,7 +57,7 @@ print("GPU allocation passed",flush=True)
     try:
         # Allow CoreX cold context initialization to finish before declaring
         # a driver hang. This is bounded and precedes dependency installation.
-        timeout = 180 if os.getenv("TAVERN_ACCELERATOR") == "iluvatar" else 60
+        timeout = 180 if accelerator in {"iluvatar", "metax"} else 60
         result = child.wait(timeout=timeout)
     except subprocess.TimeoutExpired:
         # Do not synchronously wait again for an unresponsive driver process.
