@@ -1,6 +1,6 @@
 # 用训练模型驱动酒馆战棋客户端
 
-`live_tavern` 是 Windows 客户端试运行脚本：读取 Power.log，加载你训练的 PyTorch 权重，输出下一步建议，也能通过校准后的鼠标坐标执行支持的动作。默认输出建议。Mac 可以做日志回放和模型推理。
+`live_tavern` 是 Windows / macOS 客户端试运行脚本：读取 Power.log，加载你训练的 PyTorch 权重，输出下一步建议，也能通过校准后的鼠标坐标执行支持的动作。默认输出建议。Mac 安装和操作入口见 [Mac 说明](LIVE_SCRIPT_MAC.md)。
 
 当前交付是实验性 pilot，尚未在正式 Windows 客户端实测。它不是已经验收的完整天梯机器人。日志能还原金币、星级、手牌、商店和场面，但部分效果计数、饰品状态和对手历史仍缺失。记录中的 `coverage=estimated_log_context` 与 `unobserved` 会列出这些限制；不能把这个输入当成精确的模拟器状态。
 

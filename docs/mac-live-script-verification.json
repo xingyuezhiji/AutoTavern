@@ -1,0 +1,29 @@
+{
+  "passed": [
+    "logical Retina coordinates and negative multi-display origins; reject wrong front window, size and Windows calibration",
+    "F6 captures normalized window coordinates without mouse input",
+    "model buy drag uses window-relative logical coordinates and releases button",
+    "right click dispatches right down/up without extra left release",
+    "focus loss during drag aborts and releases held button",
+    "window movement during drag aborts and releases held button",
+    "stale log decision rejected with zero injected events",
+    "F8, STOP and window-corner failsafe prevent mouse injection",
+    "missing permissions reject UI setup without events or prompts",
+    "all Mac shell entrypoints pass bash syntax validation",
+    "Mac Bash 3.2 wrappers handle empty model args, paths with spaces, execute flags and STOP/reset",
+    "native Quartz/AppKit permission and window query completed read-only"
+  ],
+  "native": {
+    "permissions": {
+      "accessibility": true,
+      "input_monitoring": true,
+      "screen_recording": true
+    },
+    "coordinate_space": "quartz_window_points",
+    "matching_windows": [],
+    "window_status": "foreground window does not match configured Hearthstone owner/title"
+  },
+  "desktop_input_sent": false,
+  "live_client_tested": false,
+  "coordinate_space": "quartz_window_points"
+}

@@ -14,6 +14,7 @@ from .actions import Geometry, decode, executable
 from .observation import Encoder, exact_observation
 from .policy import Policy
 from .power import LogTail, NotReady, PowerState
+from .platform import backend
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -75,11 +76,10 @@ def watch(args):
     if args.execute and not config.get("calibrated"):
         raise ValueError("run calibrate against your actual client first")
     state = PowerState(config["player_name"])
-    tail = LogTail(Path(os.path.expandvars(config["log_root"])), state)
+    tail = LogTail(Path(os.path.expanduser(os.path.expandvars(config["log_root"]))), state)
     windows = None
     if args.execute:
-        from .windows import Windows
-        windows = Windows(config, args.stop_file)
+        windows = backend(config, args.stop_file)
     last_data = time.monotonic()
     last_decision = None
     pending = None
@@ -168,10 +168,12 @@ def watch(args):
 
 
 def calibrate(args):
-    from .windows import Windows
     from .actions import Geometry
     config = load_config(args.config)
-    windows = Windows(config, args.stop_file)
+    if (sys.platform == "darwin" and config.get("calibrated")
+            and config.get("coordinate_space") != "quartz_window_points"):
+        raise ValueError("cannot reuse Windows calibration on Mac; start with an empty Mac config")
+    windows = backend(config, args.stop_file)
     points, size = [], None
     try:
         for i in range(args.count if args.row else 1):
@@ -190,6 +192,8 @@ def calibrate(args):
         else:
             config.setdefault("points", {})[args.point] = points[0]
         config["calibrated"], config["client_size"] = True, size
+        if sys.platform == "darwin":
+            config["coordinate_space"] = "quartz_window_points"
         Geometry(config)
         temp = args.config.with_suffix(".json.tmp")
         temp.write_text(json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -201,8 +205,9 @@ def calibrate(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Trained-model Battlegrounds Windows UI pilot")
-    parser.add_argument("--config", type=Path, default=ROOT / "live_tavern/config.local.json")
+    parser = argparse.ArgumentParser(description="Trained-model Battlegrounds macOS/Windows UI pilot")
+    parser.add_argument("--config", type=Path, default=ROOT / "live_tavern" / (
+        "config.mac.local.json" if sys.platform == "darwin" else "config.local.json"))
     parser.add_argument("--catalog", type=Path, default=ROOT / "crates/taverngym/data/cards.json")
     parser.add_argument("--checkpoint", type=Path)
     parser.add_argument("--output", type=Path)
@@ -227,6 +232,7 @@ def main():
     group.add_argument("--row", choices=("board", "board_gaps", "hand", "shop", "choice"))
     c.add_argument("--count", type=int, default=1)
     commands.add_parser("doctor", help="validate checkpoint, vocabulary and calibration")
+    commands.add_parser("ui-doctor", help="read macOS permissions, windows and log path; no input")
     args = parser.parse_args()
     if args.command in ("watch", "replay", "sim-replay", "doctor") and not args.checkpoint:
         parser.error("--checkpoint is required before the subcommand")
@@ -243,6 +249,15 @@ def main():
         return replay(args)
     if args.command == "calibrate":
         return calibrate(args)
+    if args.command == "ui-doctor":
+        from .macos import diagnose
+        config = load_config(args.config)
+        result = diagnose(config)
+        log = Path(os.path.expanduser(os.path.expandvars(config["log_root"])))
+        result.update(log_root=str(log), log_root_exists=log.exists(),
+                      log_config=str(Path.home() / "Library/Preferences/Blizzard/Hearthstone/log.config"))
+        emit(dict(type="ui-doctor", **result), args.output)
+        return 0
     if args.command == "sim-replay":
         policy = Policy(args.checkpoint)
         obs = exact_observation(args.state.read_text(), args.seat)
@@ -258,7 +273,7 @@ def main():
               catalog_sha256=encoder.sha256, model_sha256=policy.sha256,
               catalog_client=encoder.client_version, calibrated=config.get("calibrated", False),
               rows={k: sorted(v) for k, v in config.get("rows", {}).items()},
-              points=sorted(config.get("points", {})), ui_platform="Windows"))
+              points=sorted(config.get("points", {})), ui_platform=sys.platform))
     return 0
 
 

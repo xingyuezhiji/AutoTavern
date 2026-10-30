@@ -9,9 +9,10 @@ import threading
 import time
 
 from .power import NotReady
+from .input import Input
 
 
-class Windows:
+class Windows(Input):
     def __init__(self, config: dict, stop_file: Path):
         if os.name != "nt":
             raise RuntimeError("Windows official client required for UI execution")
@@ -59,55 +60,10 @@ class Windows:
         if min(size) <= 0:
             raise NotReady("empty client rectangle")
         if require_calibrated and (not self.config.get("calibrated") or
-                                   size != self.config.get("client_size")):
+                                   size != self.config.get("client_size") or
+                                   self.config.get("coordinate_space") == "quartz_window_points"):
             raise NotReady("client size differs from calibration")
         return origin.x, origin.y, size[0], size[1]
-
-    def execute(self, plan, state, tail):
-        self.rectangle()
-        tail.poll()
-        from .actions import validate_revision
-        validate_revision(plan, state)
-        if not state.options_ready or state.depth:
-            raise NotReady("client options are no longer ready")
-        # Every move rechecks foreground and client size. A window move during a drag
-        # aborts, and finally always releases the held mouse button.
-        rect = self.rectangle()
-        def pixel(point):
-            return rect[0] + round(point[0] * rect[2]), rect[1] + round(point[1] * rect[3])
-        def move(point):
-            x0, y0 = self.mouse.position()
-            x1, y1 = pixel(point)
-            for i in range(1, 13):
-                self.check_stop()
-                if self.rectangle() != rect:
-                    raise NotReady("window moved during input")
-                self.mouse.moveTo(round(x0 + (x1 - x0) * i / 12),
-                                  round(y0 + (y1 - y0) * i / 12))
-                if self.stop.wait(0.02):
-                    raise KeyboardInterrupt
-        try:
-            for op in plan.operations:
-                self.check_stop()
-                if op["type"] == "click":
-                    move(op["point"])
-                    self.mouse.click(button=op["button"])
-                elif op["type"] == "drag":
-                    move(op["start"])
-                    self.mouse.mouseDown()
-                    move(op["end"])
-                    self.mouse.mouseUp()
-                else:
-                    raise ValueError("unknown input operation")
-        finally:
-            # Releasing a held button must still work after the corner failsafe.
-            # Disable that check solely for release, never for another action.
-            failsafe = self.mouse.FAILSAFE
-            try:
-                self.mouse.FAILSAFE = False
-                self.mouse.mouseUp()
-            finally:
-                self.mouse.FAILSAFE = failsafe
 
     def capture_point(self):
         """F6 records the pointer without bringing the terminal to the foreground."""

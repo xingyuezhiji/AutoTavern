@@ -1,0 +1,18 @@
+{
+  "player_name": "YourBattleTag#1234",
+  "log_root": "/Applications/Hearthstone/Logs",
+  "window_title": "Hearthstone",
+  "window_owner": "Hearthstone",
+  "coordinate_space": "quartz_window_points",
+  "calibrated": false,
+  "client_size": [1920, 1080],
+  "accepted_builds": [],
+  "points": {},
+  "rows": {
+    "board": {},
+    "board_gaps": {},
+    "shop": {},
+    "hand": {},
+    "choice": {}
+  }
+}
