@@ -39,3 +39,12 @@ debug server. Task 918069 was rechecked as FAILED before a new submission.
 The stale historical-observation fix remains in place. Recommendation rewards
 only read `player_view` for the learner and leave evaluation policy selection
 based on unshaped placements.
+
+## Queue restart
+
+Task 918083 stayed WAITING with zero runtime. The user requested a restart.
+The stop API accepted the request, and STOPPED was confirmed before creating
+task 918095. The replacement uses C500 and commit 01ad9fd with unchanged
+training code, initial weights, reward snapshot, and runtime mitigation.
+Its first status was WAITING; this supplies no new native-crash evidence.
+Detached monitoring and postprocessing were started for task 918095.
