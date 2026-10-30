@@ -96,6 +96,25 @@ def ensure_observe2_patch() -> None:
 def install_environment() -> None:
     """Install dependencies inside the OpenI job container."""
     ensure_observe2_patch()
+    wheel_manifest = REPO_ROOT / "openi_taverngym_wheel.json"
+    model_root = os.getenv("TAVERN_PRETRAIN_MODEL_DIR")
+    if (wheel_manifest.exists() and model_root and platform.system() == "Linux"
+            and platform.machine() == "x86_64"):
+        manifest = json.loads(wheel_manifest.read_text())
+        matches = list(Path(model_root).rglob(manifest["filename"]))
+        if len(matches) != 1 or sha256_file(matches[0]) != manifest["sha256"]:
+            raise RuntimeError("Attached simulator wheel missing or checksum mismatch")
+        if find_spec("torch") is None or find_spec("numpy") is None:
+            raise RuntimeError("Vendor image must already provide Torch and NumPy")
+        run([sys.executable, "-m", "pip", "install", "--no-deps", str(matches[0])])
+        import taverngym
+
+        fingerprint = taverngym.build_info()["source_hash"]
+        if fingerprint != manifest["source_hash"] or fingerprint != taverngym.source_hash(REPO_ROOT):
+            raise RuntimeError("Prebuilt simulator source fingerprint mismatch")
+        print(f"Prebuilt simulator verified source_hash={fingerprint}; "
+              "vendor Torch/NumPy preserved", flush=True)
+        return
     # Avoid maturin's implicit Rust bootstrap over a slow overseas connection.
     os.environ.setdefault("RUSTUP_DIST_SERVER", "https://rsproxy.cn")
     os.environ.setdefault("RUSTUP_UPDATE_ROOT", "https://rsproxy.cn/rustup")
@@ -786,6 +805,8 @@ def main() -> None:
         from c2net.context import prepare, upload_output
 
         ctx = prepare()
+        if getattr(ctx, "pretrain_model_path", None):
+            os.environ["TAVERN_PRETRAIN_MODEL_DIR"] = str(ctx.pretrain_model_path)
         if args.resume == "auto":
             model_root = getattr(ctx, "pretrain_model_path", None)
             if not model_root:
