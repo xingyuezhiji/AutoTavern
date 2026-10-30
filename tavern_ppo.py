@@ -98,6 +98,13 @@ def train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device, bc):
         for parameter in stage_anchor.parameters():
             parameter.requires_grad_(False)
     assessment = {}
+    recommendation = None
+    if args.recommendation_snapshot:
+        from recommendation_reward import Recommendation
+        recommendation = Recommendation(args.recommendation_snapshot,
+                                        args.composition_weight, args.trinket_weight)
+        (output / "recommendation_snapshot.json").write_bytes(
+            Path(args.recommendation_snapshot).read_bytes())
     bot_baseline = None
     def sync():
         actor.load_state_dict({k: v.detach().cpu() for k, v in model.state_dict().items()})
@@ -135,6 +142,7 @@ def train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device, bc):
                      "baseline_assessment": dict(assessment),
                      "gae_lambda": args.gae_lambda if league else None,
                      "stage_kl": args.stage_kl if league else 0})
+    metadata["recommendation"] = recommendation.metadata if recommendation is not None else None
     bc_payload = torch.load(output / "tavern_bc_policy.pt", map_location="cpu")
     torch.save(bc_payload, output / "tavern_bc_only.pt")
     # The warm-start policy is also eligible on the development set, so
@@ -166,7 +174,7 @@ def train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device, bc):
             rows, places, rollout_audit = league_collect(
                 np, torch, taverngym, actor, cpu_critic, args.rl_games,
                 args.seed + 1000000 + iteration * args.rl_games, stochastic=True,
-                opponents=opponents, mode=args.league_mode)
+                opponents=opponents, mode=args.league_mode, recommendation=recommendation)
         else:
             rows, places = collect(np, torch, taverngym, actor, cpu_critic, args.rl_games,
                                   args.seed + 1000000 + iteration * args.rl_games,
@@ -180,7 +188,8 @@ def train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device, bc):
                 gae, next_value = 0.0, 0.0
                 for t in range(len(episode) - 1, -1, -1):
                     value = episode[t][5]
-                    delta = (reward if t == len(episode) - 1 else 0.0) + next_value - value
+                    bonus = episode[t][6] if recommendation is not None else 0.0
+                    delta = bonus + (reward if t == len(episode) - 1 else 0.0) + next_value - value
                     gae = delta + args.gae_lambda * gae
                     targets[t] = gae + value
                     next_value = value
@@ -258,6 +267,10 @@ def train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device, bc):
                   "optimizer_steps": optimizer_steps}
         if league:
             record["rollout_audit"] = rollout_audit
+        if device.type == "cuda":
+            record["gpu_memory"] = {"allocated": torch.cuda.memory_allocated(),
+                                    "reserved": torch.cuda.memory_reserved(),
+                                    "peak_allocated": torch.cuda.max_memory_allocated()}
         # A fixed development set selects the checkpoint; external fixed games
         # remain untouched for the final independent comparison.
         if iteration % args.selection_interval == 0 or iteration == args.rl_rounds:
@@ -284,6 +297,12 @@ def train_ppo(args, np, torch, nn, F, taverngym, model, cfg, device, bc):
               f"avg_place={record['avg_place']:.3f} reward={record['mean_reward']:.3f} "
               f"top4={record['top4']:.3f} loss={record['loss']} "
               f"elapsed={time.time()-started:.1f}s", flush=True)
+        if recommendation is not None:
+            bonus_rows = rollout_audit["recommendation"]["episodes"]
+            print(f"PPO prior round={iteration} mean_bonus="
+                  f"{sum(x['total'] for x in bonus_rows)/len(bonus_rows):.6f} "
+                  f"choices={sum(x['choice_events'] for x in bonus_rows)} "
+                  f"gpu_memory={record.get('gpu_memory')}", flush=True)
     save_checkpoint(torch, model, cfg, output / "tavern_ppo_final.pt", args,
                     bc_payload["metrics"]["val_loss"], bc_payload["metrics"]["val_acc"], taverngym)
     model.load_state_dict(torch.load(output / "tavern_bc_policy.pt", map_location="cpu")["state_dict"])

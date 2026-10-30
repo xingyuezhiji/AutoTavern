@@ -1,0 +1,32 @@
+{
+  "properties_passed": true,
+  "inference_only": true,
+  "complete_games": 208,
+  "reward_does_not_change_inference": true,
+  "runs": [
+    {
+      "seed": 20331030,
+      "games": 64,
+      "avg_place": 3.921875,
+      "reward_events": 65,
+      "mean_bonus": 0.005784505208333331,
+      "refreshes": 2303
+    },
+    {
+      "seed": 20332030,
+      "games": 64,
+      "avg_place": 3.796875,
+      "reward_events": 64,
+      "mean_bonus": 0.010818359375000003,
+      "refreshes": 2528
+    },
+    {
+      "seed": 20333030,
+      "games": 64,
+      "avg_place": 3.53125,
+      "reward_events": 65,
+      "mean_bonus": 0.010457031250000007,
+      "refreshes": 2241
+    }
+  ]
+}

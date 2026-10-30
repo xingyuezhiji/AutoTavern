@@ -1,0 +1,2025 @@
+{
+  "schema_version": 1,
+  "snapshot_date": "2026-10-30",
+  "catalog_sha256": "429305fb9dd53e6c5240bf5219a747602e96d7a0e4bbd19a0d65b8b044ed6168",
+  "sources": [
+    {
+      "file": "COLLECTION.md",
+      "sha256": "fc34df7711d60982e5e147df3e9763ba2efe3f586a033f1ddcba99fb6e4c570f"
+    },
+    {
+      "file": "composition-guides.json",
+      "sha256": "af10c4bfa45d5ab0e65c0e1177ba97f0ad4a320da36d879fe76b7443e8ac950c"
+    },
+    {
+      "file": "hsreplay-entity-data.json",
+      "sha256": "125aee3d29df1f4302e1f460b6edfd81fd3dfb59296a02f4df4aa43d24ccaedf"
+    }
+  ],
+  "rule_equivalence_verified": false,
+  "interpretation": "weak observational prior",
+  "compositions": [
+    {
+      "title": "Aberrations - 手速神明 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/96/aberrations-apm-deity",
+      "core_ids": [
+        "BG33_823",
+        "BG33_825",
+        "BG36_109",
+        "BG36_111"
+      ]
+    },
+    {
+      "title": "Aberrations - 亡语/法术 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/94/aberrations-deathrattle-spells",
+      "core_ids": [
+        "BG25_354",
+        "BG36_204",
+        "BG36_208",
+        "BG36_318"
+      ]
+    },
+    {
+      "title": "Aberrations - 腐泥 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/97/aberrations-sludge",
+      "core_ids": [
+        "BG26_ICC_901",
+        "BG32_821",
+        "BG36_104",
+        "BG36_115",
+        "BG36_320"
+      ]
+    },
+    {
+      "title": "Beasts - 玩虫就选 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/38/beasts-beetles",
+      "core_ids": [
+        "BG26_802",
+        "BG31_809",
+        "BG36_204",
+        "BG36_209"
+      ]
+    },
+    {
+      "title": "Beasts - 利维坦 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/83/beasts-leviathan",
+      "core_ids": [
+        "BG26_802",
+        "BG35_602",
+        "BG35_604",
+        "BG36_204"
+      ]
+    },
+    {
+      "title": "Beasts - 召唤 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/12/beasts-summons",
+      "core_ids": [
+        "BG25_354",
+        "BG26_802",
+        "BG35_604",
+        "BG36_204",
+        "BG36_208",
+        "BGS_018"
+      ]
+    },
+    {
+      "title": "Beasts - 美味龙虾 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/87/beasts-tasty-lobstah",
+      "core_ids": [
+        "BG25_354",
+        "BG36_202",
+        "BG36_204",
+        "BG36_208"
+      ]
+    },
+    {
+      "title": "Demons - 亡语/酒馆强化 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/100/demons-deathrattle-shop-buff",
+      "core_ids": [
+        "BG25_354",
+        "BG36_362",
+        "BG36_731"
+      ]
+    },
+    {
+      "title": "Demons - 在自己回合受到的伤害 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/13/demons-self-damage",
+      "core_ids": [
+        "BG32_873",
+        "BG35_883",
+        "BG36_733",
+        "BG36_762",
+        "BG_LOE_077"
+      ]
+    },
+    {
+      "title": "Demons - 酒馆强化 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/41/demons-shop-buff",
+      "core_ids": [
+        "BG28_633",
+        "BG35_883",
+        "BG36_731",
+        "BG36_762"
+      ]
+    },
+    {
+      "title": "Dragons - 战吼 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/15/dragons-battlecries",
+      "core_ids": [
+        "BG29_813",
+        "BG34_633",
+        "BG36_701",
+        "BG36_849",
+        "BGS_041",
+        "BG_LOE_077"
+      ]
+    },
+    {
+      "title": "Dragons - Copebringer 流 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/101/dragons-copebringer",
+      "core_ids": [
+        "BG29_813",
+        "BG36_364",
+        "BG36_849",
+        "BGS_040"
+      ]
+    },
+    {
+      "title": "Dragons - 法术强度 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/103/dragons-spell-power",
+      "core_ids": [
+        "BG29_813",
+        "BG36_241",
+        "BG36_242",
+        "BG36_243",
+        "BG36_245",
+        "BG_LOE_077"
+      ]
+    },
+    {
+      "title": "Elementals - 活体艾泽里特 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/95/elementals-living-azerite",
+      "core_ids": [
+        "BG28_707",
+        "BG35_881",
+        "BG35_883",
+        "BG36_701",
+        "BG_LOE_077"
+      ]
+    },
+    {
+      "title": "Elementals - 无羁雷暴 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/92/elementals-unbound-tempest",
+      "core_ids": [
+        "BG36_352",
+        "BG36_701",
+        "BGS_123",
+        "BG_LOE_077"
+      ]
+    },
+    {
+      "title": "Mechs - 手速磁力 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/99/mechs-apm-magnetic",
+      "core_ids": [
+        "BG26_149",
+        "BG33_823",
+        "BG33_825",
+        "BG36_367",
+        "BG36_851"
+      ]
+    },
+    {
+      "title": "Mechs - 磁力/法术 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/91/mechs-magnetics-spells",
+      "core_ids": [
+        "BG26_152",
+        "BG30_121",
+        "BG35_883",
+        "BG36_853"
+      ]
+    },
+    {
+      "title": "Mechs - 扩音机 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/102/mechs-volumizer",
+      "core_ids": [
+        "BG26_152",
+        "BG26_ICC_901",
+        "BG34_171",
+        "BG36_366"
+      ]
+    },
+    {
+      "title": "喝茶流 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/98/menagerie",
+      "core_ids": [
+        "BG30_121",
+        "BG35_883",
+        "BG36_640",
+        "BG_LOE_077"
+      ]
+    },
+    {
+      "title": "Murlocs - 关键词 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/31/murlocs-keyword",
+      "core_ids": [
+        "BG31_148",
+        "BG33_318",
+        "BG36_700",
+        "BG36_701",
+        "BG_LOE_077"
+      ]
+    },
+    {
+      "title": "Murlocs - 魔鳍 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/56/murlocs-magicfin",
+      "core_ids": [
+        "BG22_403",
+        "BG26_ICC_901",
+        "BG32_821",
+        "BG33_890t",
+        "BG33_891",
+        "BG_LOE_077"
+      ]
+    },
+    {
+      "title": "Murlocs - 潮汐召唤者 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/67/murlocs-tidecaller",
+      "core_ids": [
+        "BG26_354",
+        "BG27_556",
+        "BG33_891",
+        "BG35_883",
+        "BG36_704",
+        "BG_LOE_077"
+      ]
+    },
+    {
+      "title": "Murlocs - 烈毒搅局 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/8/murlocs-venom-scam",
+      "core_ids": [
+        "BG23_318",
+        "BG33_318",
+        "BG36_700"
+      ]
+    },
+    {
+      "title": "Pirates - 手速金色 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/89/pirates-apm-golden",
+      "core_ids": [
+        "BG33_823",
+        "BG36_344",
+        "BG36_523"
+      ]
+    },
+    {
+      "title": "野猪人 - 手速酒馆强化 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/76/quilboar-apm-shop-buff",
+      "core_ids": [
+        "BG28_633",
+        "BG35_883",
+        "BG_LOE_077"
+      ]
+    },
+    {
+      "title": "野猪人 - 抉择 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/88/quilboar-choose-one",
+      "core_ids": [
+        "BG31_323",
+        "BG31_326",
+        "BG33_885",
+        "BG34_684",
+        "BG36_331"
+      ]
+    },
+    {
+      "title": "野猪人 - 宝石弹幕 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/72/quilboar-gem-barrage",
+      "core_ids": [
+        "BG34_682",
+        "BG34_684"
+      ]
+    },
+    {
+      "title": "野猪人 - 手牌宝石 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/63/quilboar-gems-from-hand",
+      "core_ids": [
+        "BG30_121",
+        "BG33_885",
+        "BG36_370"
+      ]
+    },
+    {
+      "title": "亡灵 - 手速亡灵 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/3/undead-apm-undead",
+      "core_ids": [
+        "BG25_010",
+        "BG33_823",
+        "BG33_825",
+        "BG34_692",
+        "BG36_515"
+      ]
+    },
+    {
+      "title": "亡灵 - 攻击力成长 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/14/undead-attack-scaling",
+      "core_ids": [
+        "BG25_010",
+        "BG28_309",
+        "BG32_324",
+        "BG36_511",
+        "BG36_515"
+      ]
+    },
+    {
+      "title": "亡灵 - 永恒骑士 流派\n第14赛季",
+      "url": "https://hsreplay.net/zh-hans/battlegrounds/comps/104/undead-eternal-knight",
+      "core_ids": [
+        "BG25_008",
+        "BG25_009",
+        "BG34_403"
+      ]
+    }
+  ],
+  "lesser_trinkets": [
+    {
+      "id": "BG36_MagicItem_414",
+      "average_placement": 3.63,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_301",
+      "average_placement": 3.66,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_962",
+      "average_placement": 3.71,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_808",
+      "average_placement": 3.74,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_307",
+      "average_placement": 3.82,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_411",
+      "average_placement": 3.91,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_988",
+      "average_placement": 3.93,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_821",
+      "average_placement": 4.0,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_403",
+      "average_placement": 4.0,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_850",
+      "average_placement": 4.01,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_303",
+      "average_placement": 4.05,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_434",
+      "average_placement": 4.07,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_822",
+      "average_placement": 4.08,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_360",
+      "average_placement": 4.08,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_150",
+      "average_placement": 4.08,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_868",
+      "average_placement": 4.12,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_852",
+      "average_placement": 4.13,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_409",
+      "average_placement": 4.13,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_872",
+      "average_placement": 4.13,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_801",
+      "average_placement": 4.14,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_410",
+      "average_placement": 4.17,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_206",
+      "average_placement": 4.17,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_900",
+      "average_placement": 4.17,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_276",
+      "average_placement": 4.18,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_841",
+      "average_placement": 4.2,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_404",
+      "average_placement": 4.2,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_203",
+      "average_placement": 4.22,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_201",
+      "average_placement": 4.24,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_437",
+      "average_placement": 4.24,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_713",
+      "average_placement": 4.26,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_271",
+      "average_placement": 4.26,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_306",
+      "average_placement": 4.27,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_547",
+      "average_placement": 4.28,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_402",
+      "average_placement": 4.28,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_902",
+      "average_placement": 4.28,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_410",
+      "average_placement": 4.28,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_820",
+      "average_placement": 4.29,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_423",
+      "average_placement": 4.3,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_301",
+      "average_placement": 4.3,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_152",
+      "average_placement": 4.3,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_871",
+      "average_placement": 4.31,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_818",
+      "average_placement": 4.32,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_860",
+      "average_placement": 4.32,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_892",
+      "average_placement": 4.32,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_700",
+      "average_placement": 4.34,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_840",
+      "average_placement": 4.34,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_361",
+      "average_placement": 4.35,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_425",
+      "average_placement": 4.36,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_202",
+      "average_placement": 4.36,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_951",
+      "average_placement": 4.37,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_851",
+      "average_placement": 4.37,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_924",
+      "average_placement": 4.37,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_208",
+      "average_placement": 4.37,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_411",
+      "average_placement": 4.37,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_220",
+      "average_placement": 4.37,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_800",
+      "average_placement": 4.38,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_801",
+      "average_placement": 4.38,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_302",
+      "average_placement": 4.39,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_400",
+      "average_placement": 4.39,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_703",
+      "average_placement": 4.39,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_420",
+      "average_placement": 4.39,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_707",
+      "average_placement": 4.4,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_305",
+      "average_placement": 4.4,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_816",
+      "average_placement": 4.4,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_544",
+      "average_placement": 4.41,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_821",
+      "average_placement": 4.43,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_858",
+      "average_placement": 4.43,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_416",
+      "average_placement": 4.43,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_891",
+      "average_placement": 4.43,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_350",
+      "average_placement": 4.44,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_817",
+      "average_placement": 4.44,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_931",
+      "average_placement": 4.44,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_893",
+      "average_placement": 4.45,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_998",
+      "average_placement": 4.46,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_815",
+      "average_placement": 4.46,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_931",
+      "average_placement": 4.47,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_428",
+      "average_placement": 4.48,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_804",
+      "average_placement": 4.49,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_423",
+      "average_placement": 4.49,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_706",
+      "average_placement": 4.5,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_888",
+      "average_placement": 4.51,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_847",
+      "average_placement": 4.53,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_914",
+      "average_placement": 4.53,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_435",
+      "average_placement": 4.53,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_407",
+      "average_placement": 4.54,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_430",
+      "average_placement": 4.54,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_211",
+      "average_placement": 4.55,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_200",
+      "average_placement": 4.55,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_705",
+      "average_placement": 4.55,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_817",
+      "average_placement": 4.57,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_170",
+      "average_placement": 4.58,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_434",
+      "average_placement": 4.59,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_300",
+      "average_placement": 4.6,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_810",
+      "average_placement": 4.6,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_390",
+      "average_placement": 4.6,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_811",
+      "average_placement": 4.6,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_301",
+      "average_placement": 4.61,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_890",
+      "average_placement": 4.61,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_823",
+      "average_placement": 4.63,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_814",
+      "average_placement": 4.63,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_831",
+      "average_placement": 4.64,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG35_MagicItem_302",
+      "average_placement": 4.64,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_400",
+      "average_placement": 4.64,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_957",
+      "average_placement": 4.65,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_416",
+      "average_placement": 4.65,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_424",
+      "average_placement": 4.69,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_609",
+      "average_placement": 4.7,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_812",
+      "average_placement": 4.76,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_994",
+      "average_placement": 4.77,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG32_MagicItem_278",
+      "average_placement": 4.77,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG30_MagicItem_981",
+      "average_placement": 4.89,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    },
+    {
+      "id": "BG36_MagicItem_408",
+      "average_placement": 4.91,
+      "source_url": "https://hsreplay.net/zh-hans/battlegrounds/trinkets/lesser/",
+      "statistical_scope": {
+        "player_percentile": "top_50_percent",
+        "rating_threshold_display": "6,200+",
+        "time_range_display": "最近7天",
+        "sample_count_display": "530,000",
+        "snapshot_date": "2026-10-30",
+        "exact_patch": null,
+        "mode": "solo",
+        "interpretation": "observational association; not causal effect"
+      }
+    }
+  ]
+}

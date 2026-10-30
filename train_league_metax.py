@@ -14,5 +14,8 @@ if __name__ == "__main__":
     if not shutil.which("mx-smi"):
         raise RuntimeError("MetaX device utility unavailable; refuse a different accelerator")
     os.environ["TAVERN_ACCELERATOR"] = "metax"
+    for variable in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS",
+                     "NUMEXPR_NUM_THREADS", "VECLIB_MAXIMUM_THREADS"):
+        os.environ[variable] = "1"
     runpy.run_path(str(Path(__file__).with_name("train_league_gpu.py")),
                    run_name="__main__")

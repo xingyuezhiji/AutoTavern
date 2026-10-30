@@ -41,6 +41,10 @@ REPO_ROOT = Path(__file__).resolve().parent
 # Match the allocator configuration used by the successful CoreX reference.
 # This must be set before importing Torch in the parent or CUDA probe.
 os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "max_split_size_mb:128")
+if os.getenv("TAVERN_ACCELERATOR") == "metax":
+    for variable in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS",
+                     "NUMEXPR_NUM_THREADS", "VECLIB_MAXIMUM_THREADS"):
+        os.environ[variable] = "1"
 PATCH_URL = "https://rizling.top/downloads/autotavern-observe2.patch"
 PATCH_SHA256 = "1e48a071cad63c284debbf917cb012595a405a4ef5ab66180eb2918e205aaac0"
 PINNED_COMMIT = "fb61201a557ddd36a411cf44aac51ce4d9b606ce"
@@ -328,11 +332,13 @@ def cuda_training_ready(timeout: float = 180) -> bool:
     """Exercise the actual policy in a killable process before touching GPU here."""
     probe = """
 import faulthandler
+import os
 import torch
 from train import ModelConfig, build_model_class, move_policy, move_tensor
 faulthandler.enable()
 faulthandler.dump_traceback_later(20, repeat=True)
-torch.set_num_threads(4)
+torch.set_num_threads(1 if os.getenv("TAVERN_ACCELERATOR") == "metax" else 4)
+torch.set_num_interop_threads(1)
 print("CUDA probe: checking device", flush=True)
 if not torch.cuda.is_available():
     raise RuntimeError("CUDA is unavailable")
@@ -441,7 +447,14 @@ def train_bc(args) -> None:
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
-    torch.set_num_threads(min(4, os.cpu_count() or 1))
+    torch.set_num_threads(1 if os.getenv("TAVERN_ACCELERATOR") == "metax" else min(4, os.cpu_count() or 1))
+    torch.set_num_interop_threads(1)
+    if os.getenv("TAVERN_ACCELERATOR") == "metax":
+        faulthandler.cancel_dump_traceback_later()
+    print(json.dumps({"runtime_threads": torch.get_num_threads(),
+                      "interop_threads": torch.get_num_interop_threads(),
+                      "periodic_tracebacks": os.getenv("TAVERN_ACCELERATOR") != "metax",
+                      "torch_version": torch.__version__}), flush=True)
 
     device = torch.device("cuda" if use_cuda else "cpu")
     print(f"device={device}", flush=True)
@@ -719,6 +732,9 @@ def parse_args():
     parser.add_argument("--stage-kl", type=float, default=0.1)
     parser.add_argument("--stage-kl-rounds", type=int, default=40)
     parser.add_argument("--gae-lambda", type=float, default=0.995)
+    parser.add_argument("--recommendation-snapshot", help="optional public-guide reward snapshot")
+    parser.add_argument("--composition-weight", type=float, default=0.1)
+    parser.add_argument("--trinket-weight", type=float, default=0.05)
     parser.add_argument("--capacity-ablation", action="store_true")
     parser.add_argument("--capacity-epochs", type=int, default=8)
     parser.add_argument("--capacity-eval-games", type=int, default=64)
@@ -733,7 +749,9 @@ def parse_args():
             args.league_final_games < 1 or not 0 <= args.gae_lambda <= 1 or
             args.stage_kl < 0 or args.stage_kl_rounds < 0 or
             args.capacity_epochs < 1 or args.capacity_eval_games < 1 or
-            (args.capacity_ablation and not args.league_pool)):
+            (args.capacity_ablation and not args.league_pool) or
+            (args.recommendation_snapshot and not args.league_pool) or
+            not 0 <= args.composition_weight <= 0.1 or not 0 <= args.trinket_weight <= 0.05):
         parser.error("invalid sample, epoch, batch, evaluation, RL or validation limits")
     return args
 

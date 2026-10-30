@@ -54,7 +54,7 @@ def assignment(mode, game_index, learner, pool_size):
 
 
 def collect(np, torch, tg, actor, critic, games, seed, *, stochastic,
-            opponents=(), mode="bot", record=True):
+            opponents=(), mode="bot", record=True, recommendation=None):
     """All updates happen elsewhere; returns learner-only complete episodes."""
     active = [tg.Game(seed + i) for i in range(games)]
     seats = [i % 8 for i in range(games)]
@@ -63,6 +63,7 @@ def collect(np, torch, tg, actor, critic, games, seed, *, stochastic,
     guards = [0] * games
     counts = [0] * len(opponents)
     refreshed_opponent_decisions = 0
+    rewards = [recommendation.episode() for _ in active] if recommendation is not None else None
     actor_device = next(actor.parameters()).device
     critic_device = next(critic.parameters()).device if critic is not None else actor_device
     actor.eval()
@@ -148,8 +149,11 @@ def collect(np, torch, tg, actor, critic, games, seed, *, stochastic,
             a = int(action[j])
             if not observations[j][2][a]:
                 raise RuntimeError("learner illegal action")
+            bonus = rewards[i].step(json.loads(active[i].player_view(seats[i])),
+                                    a, observations[j][2]) if rewards is not None else 0.0
             if record:
-                rows[i].append((*observations[j], a, float(logp[j]), float(values[j])))
+                row = (*observations[j], a, float(logp[j]), float(values[j]))
+                rows[i].append((*row, bonus) if rewards is not None else row)
             active[i].step(seats[i], a)
     placements = [int(g.placements()[seats[i]]) for i, g in enumerate(active)]
     if any(not 1 <= place <= 8 for place in placements):
@@ -158,6 +162,9 @@ def collect(np, torch, tg, actor, critic, games, seed, *, stochastic,
              "refreshed_opponent_decisions": refreshed_opponent_decisions,
              "opponent_assignments": assigned, "learner_seats": seats,
              "own_seat_observations_only": True, "complete_games": len(placements)}
+    if rewards is not None:
+        audit["recommendation"] = {"provenance": recommendation.metadata,
+                                   "episodes": [reward.audit() for reward in rewards]}
     return rows, placements, audit
 
 
