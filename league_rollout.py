@@ -62,6 +62,7 @@ def collect(np, torch, tg, actor, critic, games, seed, *, stochastic,
     rows = [[] for _ in active]
     guards = [0] * games
     counts = [0] * len(opponents)
+    refreshed_opponent_decisions = 0
     actor_device = next(actor.parameters()).device
     critic_device = next(critic.parameters()).device if critic is not None else actor_device
     actor.eval()
@@ -85,8 +86,9 @@ def collect(np, torch, tg, actor, critic, games, seed, *, stochastic,
                 if policy_index is None:
                     game.step(seat, int(game.bot_action(seat)))
                 else:
-                    obs = decode_obs(np, game.observe2(seat), game.legal_mask(seat))
-                    batches[policy_index].append((i, seat, obs))
+                    raw_obs, raw_mask = game.observe2(seat), game.legal_mask(seat)
+                    obs = decode_obs(np, raw_obs, raw_mask)
+                    batches[policy_index].append((i, seat, obs, raw_obs, raw_mask))
         for policy_index, batch in enumerate(batches):
             if not batch:
                 continue
@@ -97,11 +99,26 @@ def collect(np, torch, tg, actor, critic, games, seed, *, stochastic,
                 raise RuntimeError("historical policy empty legal mask")
             with torch.no_grad():
                 actions = opponents[policy_index](features, cards).masked_fill(~mask, -1e9).argmax(-1)
-            for row_index, (i, seat, obs) in enumerate(batch):
+            for row_index, (i, seat, obs, raw_obs, raw_mask) in enumerate(batch):
                 # Another seat can end the final combat while this batch waits.
                 if active[i].is_over() or not active[i].needs_action(seat):
                     continue
                 action = int(actions[row_index])
+                # Other seats can give this seat a card/triple/choice while its
+                # batch waits. Recompute from its current view before applying.
+                current_obs = active[i].observe2(seat)
+                current_mask = active[i].legal_mask(seat)
+                if current_obs != raw_obs or current_mask != raw_mask:
+                    obs = decode_obs(np, current_obs, current_mask)
+                    if not obs[2].any():
+                        raise RuntimeError("historical policy empty refreshed legal mask")
+                    with torch.no_grad():
+                        logits = opponents[policy_index](
+                            torch.from_numpy(obs[0][None]),
+                            torch.from_numpy(obs[1][None].astype("int64")))
+                        action = int(logits.masked_fill(
+                            ~torch.from_numpy(obs[2][None]), -1e9).argmax(-1)[0])
+                    refreshed_opponent_decisions += 1
                 if not obs[2][action]:
                     raise RuntimeError("historical policy illegal action")
                 active[i].step(seat, action)
@@ -138,6 +155,7 @@ def collect(np, torch, tg, actor, critic, games, seed, *, stochastic,
     if any(not 1 <= place <= 8 for place in placements):
         raise RuntimeError("invalid completed placement")
     audit = {"mode": mode, "pool_decision_counts": counts,
+             "refreshed_opponent_decisions": refreshed_opponent_decisions,
              "opponent_assignments": assigned, "learner_seats": seats,
              "own_seat_observations_only": True, "complete_games": len(placements)}
     return rows, placements, audit
