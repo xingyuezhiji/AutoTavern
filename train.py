@@ -101,7 +101,8 @@ def install_environment() -> None:
     if (wheel_manifest.exists() and model_root and platform.system() == "Linux"
             and platform.machine() == "x86_64"):
         manifest = json.loads(wheel_manifest.read_text())
-        matches = list(Path(model_root).rglob(manifest["filename"]))
+        bundled = REPO_ROOT / "prebuilt" / manifest["filename"]
+        matches = [bundled] if bundled.is_file() else list(Path(model_root).rglob(manifest["filename"]))
         if len(matches) != 1 or sha256_file(matches[0]) != manifest["sha256"]:
             raise RuntimeError("Attached simulator wheel missing or checksum mismatch")
         if find_spec("torch") is None or find_spec("numpy") is None:
